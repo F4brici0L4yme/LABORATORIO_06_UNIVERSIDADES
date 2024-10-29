@@ -1,3 +1,7 @@
-# LABORATORIO_06_UNIVERSIDADES
-Hecho por: 
-CHIPANA JERONIMO GERMAN ARTURO-HILACONDO BEGAZO EMANUEL DAVID-LAYME SALAS RODRIGO FABRICIO-SULLCA MAMANI MAURO SNAYDER
+# Programación Web 1
+- Chipana Jeronimo German Arturo
+- Hilacondo Begazo Emanuel David
+- Layme Salas Rodrigo Fabricio
+- Sullca Mamani Mauro Snayder
+- Teoría grupo A
+- Laboratorio grupo D
