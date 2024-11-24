@@ -1,4 +1,6 @@
-# Programación Web 11
+# Programación Web 1 LABORATORIO
+- Chipana Jeronimo German Arturo
+- Hilacondo Begazo Emanuel David
 - Layme Salas Rodrigo Fabricio
-- Teoría grupo A
-- Laboratorio grupo D
+- Sullca Mamani Mauro Snayder
+He aquí nuestro proyecto. Java UML Generator
