@@ -1,13 +1,10 @@
-CREATE DATABASE IF NOT EXISTS mydb;
+CREATE DATABASE puml_history;
 
-USE mydb;
+USE puml_history;
 
-CREATE TABLE IF NOT EXISTS users (
+CREATE TABLE files (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(255) NOT NULL
+    filename VARCHAR(255) NOT NULL,
+    content TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
-
-INSERT INTO users (name) VALUES
-('Rodrigo'),
-('Mauro'),
-('Emanuel');
