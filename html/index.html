@@ -6,7 +6,7 @@
 </head>
 <body>
     <h1>Subir Archivo PUML</h1>
-    <form action="/cgi-bin/save_puml.pl" method="post">
+    <form action="../cgi-bin/save_puml.pl" method="get">
         <label for="filename">Nombre del Archivo:</label>
         <input type="text" id="filename" name="filename" required><br><br>
         <label for="content">Contenido:</label><br>
@@ -15,6 +15,6 @@
     </form>
     <hr>
     <h2>Ver Historial</h2>
-    <a href="/cgi-bin/fetch_puml_history.pl">Ver Historial de Archivos PUML</a>
+    <a href="../cgi-bin/fetch_puml_history.pl">Ver Historial de Archivos PUML</a>
 </body>
 </html>

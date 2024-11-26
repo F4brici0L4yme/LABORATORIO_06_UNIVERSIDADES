@@ -21,7 +21,7 @@ $sth->execute();
 
 print "<html><head><title>Historial de Archivos PUML</title></head><body>";
 print "<h1>Historial de Archivos PUML</h1>";
-print "<table border='1'><tr><th>Nombre del Archivo</th><th>Fecha de Creación</th></tr>";
+print "<table border='1'><tr><th>Nombre del Archivo</th><th>Fecha de creacion</th></tr>";
 
 while (my $row = $sth->fetchrow_hashref) {
     print "<tr><td>$row->{filename}</td><td>$row->{created_at}</td></tr>";
