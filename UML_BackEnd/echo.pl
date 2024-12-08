@@ -30,14 +30,14 @@ Content-type: text/html
 <div class="container">
     <h1 class="text-center">Generador de Diagramas UML</h1>
     <hr>
-    <form id="umlForm" class="form-horizontal" action="generate_uml.pl" method="post">
+    <form id="umlForm" class="form-horizontal" action="generator_uml.pl" method="post">
         <!-- Sección de Main -->
         <div class="panel panel-default">
             <div class="panel-heading">
                 <h4 class="panel-title" data-toggle="collapse" data-target="#mainBox">Main</h4>
             </div>
             <div id="mainBox" class="panel-body">
-                <textarea id="javaCodeMain" name="java_code_main" class="form-control" rows="5" placeholder="Escribe el código de la clase Main aquí..."></textarea>
+                <textarea id="javaCodeMain" name="java_code_main" class="form-control" rows="20" placeholder="Escribe el código de la clase Main aquí..."></textarea>
             </div>
         </div>
 
@@ -47,27 +47,27 @@ Content-type: text/html
                 <h4 class="panel-title" data-toggle="collapse" data-target="#inheritanceBox">Herencia</h4>
             </div>
             <div id="inheritanceBox" class="panel-body">
-                <textarea id="javaCodeInheritance" name="java_code_inheritance" class="form-control" rows="5" placeholder="Escribe el código de la clase Herencia aquí..."></textarea>
+                <textarea id="javaCodeInheritance" name="java_code_inheritance" class="form-control" rows="20" placeholder="Escribe el código de la clase Herencia aquí..."></textarea>
             </div>
         </div>
 
-        <!-- Sección de Interface -->
+        <!-- Sección de Interfaces -->
         <div class="panel panel-default">
             <div class="panel-heading">
-                <h4 class="panel-title" data-toggle="collapse" data-target="#interfaceBox">Interface</h4>
+                <h4 class="panel-title" data-toggle="collapse" data-target="#interfaceBox">Interfaces</h4>
             </div>
             <div id="interfaceBox" class="panel-body">
-                <textarea id="javaCodeInterface" name="java_code_interface" class="form-control" rows="5" placeholder="Escribe el código de la Interface aquí..."></textarea>
+                <textarea id="javaCodeInterface" name="java_code_interface" class="form-control" rows="20" placeholder="Escribe el código de las Interfaces aquí..."></textarea>
             </div>
         </div>
 
-        <!-- Sección de Clase -->
+        <!-- Sección de Clases -->
         <div class="panel panel-default">
             <div class="panel-heading">
-                <h4 class="panel-title" data-toggle="collapse" data-target="#classBox">Clase</h4>
+                <h4 class="panel-title" data-toggle="collapse" data-target="#classBox">Clases</h4>
             </div>
             <div id="classBox" class="panel-body">
-                <textarea id="javaCodeClass" name="java_code_class" class="form-control" rows="5" placeholder="Escribe el código de la Clase aquí..."></textarea>
+                <textarea id="javaCodeClass" name="java_code_class" class="form-control" rows="20" placeholder="Escribe el código de las Clases aquí..."></textarea>
             </div>
         </div>
 
@@ -93,5 +93,4 @@ $(document).ready(function() {
 </body>
 </html>
 EOF
-
 
