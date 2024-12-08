@@ -16,14 +16,12 @@ print $cgi->header("text/plain");
 if ($path eq '/upload') {
     my $uploaded_file = $cgi->upload('javaFile');
     if ($uploaded_file) {
-        # Guardar archivo temporalmente
         my ($fh, $tempfile) = tempfile(SUFFIX => '.java');
         while (<$uploaded_file>) {
             print $fh $_;
         }
         close $fh;
 
-        # Ejecutar el generador UML
         my $output = generate_uml($tempfile);
         print $output || "Error al generar UML.";
     } else {
@@ -32,12 +30,10 @@ if ($path eq '/upload') {
 } elsif ($path eq '/text') {
     my $java_text = $cgi->param('javaText');
     if ($java_text) {
-        # Crear archivo temporal con el contenido recibido
         my ($fh, $tempfile) = tempfile(SUFFIX => '.java');
         print $fh $java_text;
         close $fh;
 
-        # Ejecutar el generador UML
         my $output = generate_uml($tempfile);
         print $output || "Error al generar UML.";
     } else {
@@ -55,86 +51,126 @@ sub generate_uml {
     my @lines = <$fh>;
     close($fh);
 
-    my ($class_name, @attributes, @methods, $class_doc);
-    my $current_method_doc = '';
-    
-    foreach my $line (@lines) {
-        # Detectar clases
-        if ($line =~ /^\s*public\s+class\s+(\w+)/) {
-            $class_name = $1;
-        }
-        
-        # Detectar comentarios Javadoc (antes de la clase o el método)
-        if ($line =~ /^\s*\/\*\*.*\*\//) {
-            # Extraer el comentario Javadoc completo
-            my $javadoc_comment = $line;
-            while ($line !~ /^\s*\*\// && defined($line = shift @lines)) {
-                $javadoc_comment .= $line;
-            }
-            # Asignar el comentario Javadoc a la clase o método
-            if ($line =~ /^\s*public\s+class\s+(\w+)/) {
-                $class_doc = $javadoc_comment;
-            } elsif ($line =~ /^\s*public\s+(\w+)\s+(\w+)\(.*\)/) {
-                $current_method_doc = $javadoc_comment;
-            }
-        }
+    my %uml_entities;
+    my @relationships;
+    my $current_entity;
+    my %class_attributes;
 
-        # Detectar atributos (pueden ser públicos o privados)
-        elsif ($line =~ /^\s*(public|private|protected)?\s*(\w+)\s+(\w+);/) {
-            my $visibility = $1 || '';  # Puede ser public, private, protected o vacío
-            my $type = $2;              # Tipo del atributo
-            my $name = $3;              # Nombre del atributo
-            if ($visibility eq "public") {
-                push @attributes, "+ $name : $type";
-            } else {
-                push @attributes, "- $name : $type";
+    foreach my $line (@lines) {
+        chomp($line);
+
+        # Detectar clases (abiertas o no)
+        if ($line =~ /^\s*public\s+(abstract\s+)?class\s+(\w+)/) {
+            $current_entity = $2;
+            $uml_entities{$current_entity} = {
+                type => 'class',
+                name => $2,
+                abstract => $1 ? 1 : 0,
+                attributes => [],
+                methods => []
+            };
+        }
+        # Detectar interfaces
+        elsif ($line =~ /^\s*public\s+interface\s+(\w+)/) {
+            $current_entity = $1;
+            $uml_entities{$current_entity} = {
+                type => 'interface',
+                name => $1,
+                attributes => [],
+                methods => []
+            };
+        }
+        # Detectar herencia de clases (extends)
+        elsif ($line =~ /^\s*public\s+class\s+(\w+)\s+extends\s+(\w+)/) {
+            my ($subclass, $superclass) = ($1, $2);
+            push @relationships, "$subclass --|> $superclass : hereda";
+        }
+        # Detectar implementación de interfaces (implements)
+        elsif ($line =~ /^\s*public\s+class\s+(\w+)\s+implements\s+([\w, ]+)/) {
+            my $class = $1;
+            my @interfaces = split /,/, $2;
+            foreach my $interface (@interfaces) {
+                $interface =~ s/^\s+|\s+$//g;  # Limpiar espacios
+                push @relationships, "$class ..|> $interface : implementa";
             }
         }
-        
+        # Detectar atributos (composición/agregación)
+        elsif ($line =~ /^\s*(public|private|protected)?\s*(\w+)\s+(\w+);/) {
+            if ($current_entity) {
+                my $visibility = $1 || 'default';
+                my $type = $2;
+                my $name = $3;
+                push @{$uml_entities{$current_entity}{attributes}}, {
+                    visibility => $visibility,
+                    type => $type,
+                    name => $name
+                };
+
+                # Almacenar el atributo con el tipo de clase para relaciones futuras
+                if ($type !~ /int|String|boolean|double|float|char|long|short|byte|boolean/) {
+                    push @{$class_attributes{$current_entity}}, $type;  # Almacena las clases asociadas
+                }
+            }
+        }
         # Detectar métodos
         elsif ($line =~ /^\s*(public|private|protected)?\s*(\w+)\s+(\w+)\(.*\)/) {
-            my $visibility = $1 || '';  # Puede ser public, private, protected o vacío
-            my $return_type = $2;       # Tipo de retorno
-            my $method_name = $3;       # Nombre del método
-            if ($visibility eq "public") {
-                push @methods, "+ $method_name() : $return_type";
-            } else {
-                push @methods, "- $method_name() : $return_type";
-            }
-            # Asignar el comentario Javadoc al método si existe
-            if ($current_method_doc) {
-                push @methods, "// Javadoc: $current_method_doc";
-                $current_method_doc = '';  # Resetear comentario después de usarlo
+            if ($current_entity) {
+                my $visibility = $1 || 'default';
+                my $return_type = $2;
+                my $method_name = $3;
+                push @{$uml_entities{$current_entity}{methods}}, {
+                    visibility => $visibility,
+                    return_type => $return_type,
+                    name => $method_name
+                };
             }
         }
     }
 
-    return "No se encontró ninguna clase en el archivo." unless $class_name;
+    # Generar UML en texto
+    my $uml = '@startuml' . "\n";
 
-    # Crear UML en texto
-    my $uml = '@startuml\n';
-    $uml .= "class $class_name {\n";
-    
-    # Agregar Javadoc de la clase si existe
-    if ($class_doc) {
-        $uml .= "// Javadoc: $class_doc\n";
-    }
-    
-    # Agregar atributos
-    if (@attributes) {
-        $uml .= join("\n", @attributes) . "\n";
-    }
-    
-    # Línea de separación entre atributos y métodos
-    $uml .= " --\n" if @attributes && @methods;
-    
-    # Agregar métodos
-    if (@methods) {
-        $uml .= join("\n", @methods) . "\n";
+    # Agregar clases, interfaces, atributos y métodos al diagrama UML
+    foreach my $entity_name (keys %uml_entities) {
+        my $entity = $uml_entities{$entity_name};
+        if ($entity->{type} eq 'interface') {
+            $uml .= "interface $entity->{name} {\n";
+        } elsif ($entity->{abstract}) {
+            $uml .= "abstract class $entity->{name} {\n";
+        } else {
+            $uml .= "class $entity->{name} {\n";
+        }
+
+        # Agregar atributos
+        foreach my $attr (@{$entity->{attributes}}) {
+            my $visibility = $attr->{visibility} eq 'public' ? '+' : '-';
+            $uml .= "    $visibility $attr->{name} : $attr->{type}\n";
+        }
+
+        # Línea de separación entre atributos y métodos
+        $uml .= "    --\n" if @{$entity->{attributes}} && @{$entity->{methods}};
+
+        # Agregar métodos
+        foreach my $method (@{$entity->{methods}}) {
+            my $visibility = $method->{visibility} eq 'public' ? '+' : '-';
+            $uml .= "    $visibility $method->{name}() : $method->{return_type}\n";
+        }
+
+        $uml .= "}\n";
     }
 
-    $uml .= "}\n";
-    $uml .= '@enduml\n';
+    # Agregar relaciones de composición/agregación basadas en los atributos
+    foreach my $class (keys %class_attributes) {
+        foreach my $related_class (@{$class_attributes{$class}}) {
+            push @relationships, "$class \"1\" *-- \"1\" $related_class : tiene";
+        }
+    }
 
+    # Agregar todas las relaciones (herencia, implementación, composición, etc.)
+    if (@relationships) {
+        $uml .= join("\n", @relationships) . "\n";
+    }
+
+    $uml .= '@enduml' . "\n";
     return $uml;
 }
