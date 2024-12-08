@@ -1,68 +1,136 @@
 #!C:/Strawberry/perl/bin/perl.exe
+
 use strict;
 use warnings;
 use utf8;
 use CGI;
+use File::Temp qw(tempfile);
 use File::Path qw(make_path);
 
 # Crear objeto CGI
 my $cgi = CGI->new;
 
-# Leer los parámetros enviados por POST
-my $java_code_main = $cgi->param('java_code_main');
+# Leer parámetros enviados por POST
+my $java_code_main        = $cgi->param('java_code_main');
 my $java_code_inheritance = $cgi->param('java_code_inheritance');
-my $java_code_interface = $cgi->param('java_code_interface');
-my $java_code_class = $cgi->param('java_code_class');
+my $java_code_interface   = $cgi->param('java_code_interface');
+my $java_code_class       = $cgi->param('java_code_class');
 
 # Imprimir encabezado HTTP y generar el HTML dinámico
 print $cgi->header(-type => 'text/html', -charset => 'UTF-8');
 
-# Función para convertir código Java a PlantUML
-sub java_to_puml {
-    my ($code, $class_name) = @_;
-    my $uml = '';
+sub generate_uml {
+    my ($java_code) = @_;
 
-    # Si se proporciona un nombre de clase, se añade al archivo UML
-    $uml .= "class $class_name {\n" if $class_name;
+    my @lines = split /\n/, $java_code;  # Divide el código Java en líneas
+    my @uml_contents;                   # Almacena las partes extraídas para el UML
+    my $current_class = '';             # Para rastrear la clase actual
 
-    # Extraer métodos (ignorando comentarios y JavaDoc)
-    while ($code =~ /public\s+(\w+)\s+(\w+)\s*\((.*?)\)/g) {
-        my $return_type = $1;
-        my $method_name = $2;
-        my $params = $3 || "";
+    foreach my $line (@lines) {
+        # Ignorar líneas que son comentarios o espacios antes de comentarios
+        next if $line =~ /^\s*(\/\*|\*|\/\/)/;
 
-        # Eliminar comentarios y normalizar espacios
-        $params =~ s/\s*\/\/.*//g;   # Eliminar comentarios en línea
-        $params =~ s/\s*\/\*.*?\*\/\s*//g; # Eliminar comentarios en bloque
-        $params =~ s/\s+/ /g;       # Normalizar espacios
+        # Buscar declaraciones de clases
+        if ($line =~ /^\s*public\s+class\s+(\w+)/) {
+            $current_class = $1;  # Captura el nombre de la clase
+            push @uml_contents, "class $current_class {";
+        }
 
-        $uml .= "  + $method_name($params) : $return_type\n";
+        # Buscar atributos
+        elsif ($line =~ /^\s*(public|private|protected)\s+(.*?);$/) {
+            my $visibility = $1;  # Captura public, private o protected
+            my $content = $2;     # Captura el contenido después de la visibilidad
+
+            # Determinar el prefijo según la visibilidad
+            my $prefix = $visibility eq 'public'    ? '+' :
+                         $visibility eq 'private'   ? '-' :
+                         $visibility eq 'protected' ? '#' : '';
+
+            # Verificar si tiene la palabra static
+            my $is_static = '';
+            if ($content =~ /\bstatic\s+/) {
+                $is_static = '{static} ';
+                $content =~ s/\bstatic\s+//g;  # Elimina la palabra static del contenido
+            }
+
+            # Ignorar la palabra final si está presente
+            $content =~ s/\bfinal\s+//g;
+
+            # Capturar tipo de dato, nombre y valor
+            if ($content =~ /^(\w+)\s+(\w+)(?:\s*=\s*(.+))?$/) {
+                my $type = $1;         # Captura el tipo de dato
+                my $name = $2;         # Captura el nombre del atributo
+                my $value = $3 // '';  # Captura el valor si existe (o vacío)
+
+                # Si hay un valor, eliminar comillas si existen
+                $value =~ s/^["']//g;
+                $value =~ s/["']$//g;
+
+                # Construir la representación UML del atributo
+                my $uml_line = "\t$prefix$is_static$name: $type";
+                $uml_line .= " = $value" if $value;  # Agregar el valor si existe
+
+                push @uml_contents, $uml_line;
+            }
+        }
+
+        # Buscar métodos
+        elsif ($line =~ /^\s*(public|private|protected)\s+(.*?\{)/) {
+            my $visibility = $1;  # Captura public, private o protected
+            my $content = $2;     # Captura el contenido después de la visibilidad
+
+            # Determinar el prefijo según la visibilidad
+            my $prefix = $visibility eq 'public'    ? '+' :
+                         $visibility eq 'private'   ? '-' :
+                         $visibility eq 'protected' ? '#' : '';
+
+            # Verificar si tiene la palabra static
+            my $is_static = '';
+            if ($content =~ /\bstatic\s+/) {
+                $is_static = '{static} ';
+                $content =~ s/\bstatic\s+//g;  # Elimina la palabra static del contenido
+            }
+
+            # Eliminar la palabra abstract si está presente
+            $content =~ s/\babstract\s+//g;
+
+            # Capturar tipo de retorno, nombre del método, y parámetros
+            if ($content =~ /^(\w+)\s+(\w+)\((.*?)\)\s*\{/) {
+                my $return_type = $1;          # Captura el tipo de retorno
+                my $method_name = $2;          # Captura el nombre del método
+                my $parameters = $3;           # Captura los parámetros
+
+                # Construir la representación UML del método
+                push @uml_contents, "\t$prefix$is_static$method_name($parameters) : $return_type";
+            }
+        }
     }
 
-    # Cerrar definición de la clase
-    $uml .= "}\n";
+    # Cerrar la clase si fue abierta
+    push @uml_contents, "}" if $current_class;
+
+    # Combinar los contenidos extraídos en un bloque de UML
+    my $uml = join("\n", @uml_contents);
     return $uml;
 }
 
-# Generar el contenido UML para cada caja de texto (Main, Herencia, Interface, Clase)
-my $uml_content = '@startuml' . "\n";
-
-# Procesar cada sección de código
-$uml_content .= java_to_puml($java_code_main, 'Main') if $java_code_main;
-$uml_content .= java_to_puml($java_code_inheritance, 'Herencia') if $java_code_inheritance;
-$uml_content .= java_to_puml($java_code_interface, 'Interface') if $java_code_interface;
-$uml_content .= java_to_puml($java_code_class, 'Clase') if $java_code_class;
-
-$uml_content .= '@enduml' . "\n";
+# Generar UML dinámico
+my $uml_content = '@startuml';
+$uml_content .= generate_uml($java_code_inheritance) ."\n";
+$uml_content .= generate_uml($java_code_interface) ."\n";
+$uml_content .= generate_uml($java_code_class) ."\n\n";
+$uml_content .= generate_uml($java_code_main) ."\n";
+$uml_content .= "\n".'@enduml'."\n";
 
 # Ruta para guardar el archivo .puml
-my $filename = "output_uml.puml";
-my $filepath = "E:/xampp/cgi-bin/prueba/$filename";
+my $output_dir = "E:/xampp/cgi-bin/prueba";
+my $filename   = "output_uml.puml";
+my $filepath   = "$output_dir/$filename";
 
 # Asegurar que el directorio exista
-make_path('E:/xampp/cgi-bin/prueba') unless -d 'E:/xampp/cgi-bin/prueba';
+make_path($output_dir) unless -d $output_dir;
 
-# Guardar el archivo .puml
+# Guardar el archivo UML
 if (open(my $fh, '>', $filepath)) {
     print $fh $uml_content;
     close($fh);
@@ -77,7 +145,7 @@ HTML
 } else {
     print <<HTML;
     <div class="alert alert-danger">
-        <p><strong>Error:</strong> No se pudo crear el archivo UML.</p>
+        <p><strong>Error:</strong> No se pudo crear el archivo UML. Verifique los permisos del directorio.</p>
     </div>
 HTML
     exit;
