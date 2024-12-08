@@ -19,7 +19,7 @@ my $java_code_class       = $cgi->param('java_code_class');
 # Imprimir encabezado HTTP y generar el HTML dinámico
 print $cgi->header(-type => 'text/html', -charset => 'UTF-8');
 
-sub generate_uml {
+sub generate_uml_class {
     my ($java_code) = @_;
 
     my @lines = split /\n/, $java_code;  # Divide el código Java en líneas
@@ -31,13 +31,13 @@ sub generate_uml {
         next if $line =~ /^\s*(\/\*|\*|\/\/)/;
 
         # Buscar declaraciones de clases
-        if ($line =~ /^\s*public\s+class\s+(\w+)/) {
-            $current_class = $1;  # Captura el nombre de la clase
+        if ($line =~ /^\s*public\s+(abstract\s+)?class\s+(\w+)/) {
+            $current_class = $2;  # Captura el nombre de la clase
             push @uml_contents, "class $current_class {";
         }
 
         # Buscar atributos
-        elsif ($line =~ /^\s*(public|private|protected)\s+(.*?);$/) {
+        elsif ($line =~ /^\s*(public|private|protected)\s+(.*?);/) {
             my $visibility = $1;  # Captura public, private o protected
             my $content = $2;     # Captura el contenido después de la visibilidad
 
@@ -114,12 +114,64 @@ sub generate_uml {
     return $uml;
 }
 
+sub generate_uml_interface {
+    my ($java_code) = @_;
+
+    my @lines = split /\n/, $java_code;  # Dividir el código Java en líneas
+    my @uml_contents;                    # Almacena las partes extraídas para el UML
+    my $inside_interface = 0;            # Bandera para saber si estamos dentro de una interfaz
+
+    foreach my $line (@lines) {
+        # Ignorar líneas vacías y comentarios
+        next if $line =~ /^\s*$/ || $line =~ /^\s*(\/\*|\*|\/\/)/;
+
+        # Capturar la declaración de la interfaz
+        if ($line =~ /^\s*(?:public\s+)?interface\s+(\w+)/) {
+            my $interface_name = $1;
+            push @uml_contents, "interface $interface_name {";
+            $inside_interface = 1;  # Marcar que estamos dentro de una interfaz
+            next;
+        }
+
+        # Procesar atributos (siempre son static y tienen valor asignado)
+        if ($inside_interface && $line =~ /^\s*(\w+)\s+(\w+)\s*=\s*([^;]+);/) {
+            my $type = $1;            # Tipo del atributo
+            my $name = $2;            # Nombre del atributo
+            my $value = $3;           # Valor del atributo
+            $value =~ s/['"]//g;      # Eliminar comillas si las tiene
+
+            # Agregar atributo al UML (siempre static)
+            push @uml_contents, "\t+{static} $name: $type = $value";
+            next;
+        }
+
+        # Procesar métodos con su nombre, parámetros y tipo de retorno
+        if ($inside_interface && $line =~ /^\s*(\w+)\s+(\w+)\((.*?)\)\s*;\s*$/) {
+            my ($return_type, $method_name, $params) = ($1, $2, $3);
+
+            # Agregar método al UML
+            push @uml_contents, "\t+$method_name($params): $return_type;";
+            next;
+        }
+
+        # Detectar el cierre de una interfaz
+        if ($line =~ /^\s*}/ && $inside_interface) {
+            push @uml_contents, "}\n";
+            $inside_interface = 0;  # Marcar que hemos salido de la interfaz
+            next;
+        }
+    }
+
+    # Combinar y devolver el UML
+    return join("\n", @uml_contents);
+}
+
 # Generar UML dinámico
-my $uml_content = '@startuml';
-$uml_content .= generate_uml($java_code_inheritance) ."\n";
-$uml_content .= generate_uml($java_code_interface) ."\n";
-$uml_content .= generate_uml($java_code_class) ."\n\n";
-$uml_content .= generate_uml($java_code_main) ."\n";
+my $uml_content = '@startuml'."\n";
+$uml_content .= generate_uml_class($java_code_inheritance) ."\n";
+$uml_content .= generate_uml_interface($java_code_interface) ."\n";
+$uml_content .= generate_uml_class($java_code_class) ."\n\n";
+$uml_content .= generate_uml_class($java_code_main) ."\n";
 $uml_content .= "\n".'@enduml'."\n";
 
 # Ruta para guardar el archivo .puml
