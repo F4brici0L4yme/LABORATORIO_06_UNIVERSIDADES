@@ -175,8 +175,8 @@ $uml_content .= generate_uml_class($java_code_main) ."\n";
 $uml_content .= "\n".'@enduml'."\n";
 
 # Ruta para guardar el archivo .puml
-my $output_dir = "E:/xampp/cgi-bin/prueba";
-my $filename   = "output_uml.puml";
+my $output_dir = "/usr/lib/puml_files/";
+my $filename   = "archivo.puml";
 my $filepath   = "$output_dir/$filename";
 
 # Asegurar que el directorio exista
@@ -191,9 +191,11 @@ if (open(my $fh, '>', $filepath)) {
         <p>Archivo UML generado exitosamente</p>
         <p><strong>Contenido del archivo .puml:</strong></p>
         <pre>$uml_content</pre>
-        <p><a href="/prueba/$filename" download class="btn btn-success">Descargar UML</a></p>
+        <p><a type="submit" href="./save_puml.pl">Guardar</a></p>
+        <p><a type="submit" href="./fetch_puml_history.pl">Ver historial</a></p>
     </div>
 HTML
+
 } else {
     print <<HTML;
     <div class="alert alert-danger">
