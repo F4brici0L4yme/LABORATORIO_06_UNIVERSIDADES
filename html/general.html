@@ -54,42 +54,78 @@
 
 
 
-    <!-- Contact Section -->
-<section id="convertir" class="contact section">
+        <!-- Contact Section -->
+    <section id="convertir" class="contact section">
 
-    <!-- Section Title -->
-    <div class="container section-title" data-aos="fade-up">
-        <h2>Convetir</h2>
-        <p>Proporciona tu código o archivo Java para convertirlo a diagramas UML.</p>
-    </div><!-- End Section Title -->
+        <!-- Section Title -->
+        <div class="container section-title" data-aos="fade-up">
+            <h2>Convetir</h2>
+            <p>Proporciona tu código o archivo Java para convertirlo a diagramas UML.</p>
+        </div><!-- End Section Title -->
+        
 
-    <div class="container" data-aos="fade-up" data-aos-delay="100">
-        <div class="row gy-4">
-            <!-- Cuadros de texto para ingresar código -->
-            <div class="col-lg-6">
-                <form action="" method="post" class="php-code-form" data-aos="fade-up" data-aos-delay="200">
-                    <div class="form-group">
-                        <label for="inputCode1">Código 1:</label>
-                        <textarea id="inputCode1" name="code1" class="form-control" rows="6" placeholder="Ingresa tu código aquí..."></textarea>
-                    </div>
-                    <div class="form-group mt-3">
-                        <label for="inputCode2">Código 2:</label>
-                        <textarea id="inputCode2" name="code2" class="form-control" rows="6" placeholder="Ingresa tu código aquí..."></textarea>
-                    </div>
-                    <div class="text-center mt-3">
-                        <button type="submit" class="btn btn-primary">Enviar Código</button>
-                    </div>
-                </form>
+        <!-- Formulario para ingresar el nombre de usuario y seleccionar repositorio -->
+        <div class="form-container">
+            <h4 class="section-title">Obtener Archivos de GitHub</h4>
+            <div class="form-group">
+                <label for="github-username">Nombre de usuario de GitHub:</label>
+                <input type="text" id="github-username" class="form-control" placeholder="Ingresa tu nombre de usuario de GitHub" required>
             </div>
-
-            <!-- Imagen a la derecha -->
-            <div class="col-lg-6 text-center" data-aos="fade-up" data-aos-delay="300">
-                <img src="https://d2slcw3kip6qmk.cloudfront.net/marketing/pages/chart/class-diagram-for-ATM-system-UML/Class-Diagram-ATM-system-750x660.png" alt="Contact Image" class="img-fluid rounded shadow">
+        
+            <div class="form-group">
+                <label for="repo-select">Selecciona un repositorio:</label>
+                <select id="repo-select" class="form-control" disabled>
+                    <option value="">Selecciona un repositorio</option>
+                </select>
+            </div>
+        
+            <div class="form-group">
+                <label for="file-select">Selecciona un archivo .java:</label>
+                <select id="file-select" class="form-control" disabled>
+                    <option value="">Selecciona un archivo</option>
+                </select>
+            </div>
+        
+            <div class="button-group">
+                <button id="load-repos" class="btn btn-primary">Cargar Repositorios</button>
+                <button id="load-file" class="btn btn-secondary" disabled>Cargar archivo</button>
             </div>
         </div>
-    </div>
+        
+        <div id="file-content" style="margin-top: 20px; font-family: monospace; white-space: pre-wrap;"></div>
+        <br><br>
+        <div class="container" data-aos="fade-up" data-aos-delay="100">
+            <div class="row gy-4">
+                <div class="col-lg-6">
+                    <form action="" method="post" class="php-code-form" data-aos="fade-up" data-aos-delay="200">
+                        <div class="form-group">
+                            <label for="inputCode1">Código 1:</label>
+                            <textarea id="inputCode1" name="code1" class="form-control code-input" rows="6" placeholder="Ingresa tu código aquí..."></textarea>
+                        </div>
+                        <div class="form-group mt-3">
+                            <label for="inputCode2">Código 2:</label>
+                            <textarea id="inputCode2" name="code2" class="form-control code-input" rows="6" placeholder="Ingresa tu código aquí..."></textarea>
+                        </div>
+                        <div class="form-group mt-3">
+                            <label for="inputCode3">Código 3:</label>
+                            <textarea id="inputCode3" name="code3" class="form-control code-input" rows="6" placeholder="Ingresa tu código aquí..."></textarea>
+                        </div>
+                        <div id="code-container">
+                            <!-- Los campos generados dinámicamente se agregarán aquí -->
+                        </div>
+                        <div class="text-center mt-3">
+                            <button type="submit" class="btn btn-primary">Enviar Código</button>
+                        </div>
+                    </form>
+                </div>
+        
+                <div class="col-lg-6 text-center" data-aos="fade-up" data-aos-delay="300">
+                    <img src="https://d2slcw3kip6qmk.cloudfront.net/marketing/pages/chart/class-diagram-for-ATM-system-UML/Class-Diagram-ATM-system-750x660.png" alt="Contact Image" class="img-fluid rounded shadow">
+                </div>
+            </div>
+        </div>
 
-</section><!-- /Contact Section -->
+    </section><!-- /Contact Section -->
 
 
     </main>
@@ -108,5 +144,131 @@
     <script src="assets/vendor/aos/aos.js"></script>
     <script src="assets/vendor/glightbox/js/glightbox.min.js"></script>
     <script src="assets/js/main.js"></script>
+    <script>
+        const loadReposButton = document.getElementById('load-repos');
+        const loadFileButton = document.getElementById('load-file');
+        const usernameInput = document.getElementById('github-username');
+        const repoSelect = document.getElementById('repo-select');
+        const fileSelect = document.getElementById('file-select');
+        const fileContentDiv = document.getElementById('file-content');
+        const apiUrl = 'https://api.github.com';
+        const codeContainer = document.getElementById('code-container');
+
+        function setInitialFieldHeight() {
+            const initialFields = document.querySelectorAll('.code-input');
+            initialFields.forEach(field => {
+                field.rows = 4;
+            });
+        }
+
+        loadReposButton.addEventListener('click', () => {
+            const username = usernameInput.value;
+            if (!username) {
+                alert('Por favor ingresa tu nombre de usuario de GitHub');
+                return;
+            }
+    
+            fetch(`${apiUrl}/users/${username}/repos?type=all`)
+                .then(response => response.json())
+                .then(data => {
+                    repoSelect.innerHTML = '<option value="">Selecciona un repositorio</option>';
+                    if (data.length > 0) {
+                        data.forEach(repo => {
+                            const option = document.createElement('option');
+                            option.value = repo.name;
+                            option.textContent = repo.name;
+                            repoSelect.appendChild(option);
+                        });
+                        repoSelect.disabled = false;
+                    } else {
+                        alert('No se encontraron repositorios para este usuario.');
+                    }
+                })
+                .catch(error => alert('Error al cargar repositorios: ' + error));
+        });
+
+        repoSelect.addEventListener('change', () => {
+            const username = usernameInput.value;
+            const repo = repoSelect.value;
+            if (!repo) return;
+    
+            function getJavaFiles(path = '') {
+                fetch(`${apiUrl}/repos/${username}/${repo}/contents/${path}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        data.forEach(item => {
+                            if (item.type === 'file' && item.name.endsWith('.java')) {
+                                const option = document.createElement('option');
+                                option.value = item.download_url;
+                                option.textContent = path ? `${path}/${item.name}` : item.name;
+                                fileSelect.appendChild(option);
+                            } else if (item.type === 'dir') {
+                                getJavaFiles(item.path);
+                            }
+                        });
+    
+                        fileSelect.disabled = false;
+                        loadFileButton.disabled = false;
+                    })
+                    .catch(error => alert('Error al cargar archivos del repositorio: ' + error));
+            }
+
+            fileSelect.innerHTML = '<option value="">Selecciona un archivo</option>';
+            getJavaFiles();
+        });
+
+        function loadFileContent(fileUrl, targetElement) {
+            fetch(fileUrl)
+                .then(response => response.text())
+                .then(content => {
+                    targetElement.value = content;
+                })
+                .catch(error => alert('Error al cargar el contenido del archivo: ' + error));
+        }
+
+        function areFirstThreeFieldsFilled() {
+            const fields = document.querySelectorAll('.code-input');
+            return fields.length >= 3 && Array.from(fields).slice(0, 3).every(field => field.value !== "");
+        }
+
+        function createNewCodeField(index) {
+            const newFieldContainer = document.createElement('div');
+            newFieldContainer.classList.add('form-group', 'mt-3');
+    
+            const newLabel = document.createElement('label');
+            newLabel.setAttribute('for', `inputCode${index}`);
+            newLabel.textContent = `Código ${index}:`;
+    
+            const newTextarea = document.createElement('textarea');
+            newTextarea.id = `inputCode${index}`;
+            newTextarea.name = `code${index}`;
+            newTextarea.classList.add('form-control', 'code-input');
+            newTextarea.rows = 4;
+            newTextarea.placeholder = 'Ingresa tu código aquí...';
+    
+            newFieldContainer.appendChild(newLabel);
+            newFieldContainer.appendChild(newTextarea);
+            codeContainer.appendChild(newFieldContainer);
+        }
+
+        loadFileButton.addEventListener('click', () => {
+            const fileUrl = fileSelect.value;
+            if (!fileUrl) return;
+
+            if (areFirstThreeFieldsFilled()) {
+                const nextIndex = document.querySelectorAll('.code-input').length + 1;
+                createNewCodeField(nextIndex);
+            }
+    
+            const fields = document.querySelectorAll('.code-input');
+            const nextField = Array.from(fields).find(field => field.value === "");
+    
+            if (nextField) {
+                loadFileContent(fileUrl, nextField);
+            }
+        });
+
+        window.addEventListener('load', setInitialFieldHeight);
+    </script>
 </body>
 </html>
