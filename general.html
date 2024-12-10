@@ -54,42 +54,78 @@
 
 
 
-    <!-- Contact Section -->
-<section id="convertir" class="contact section">
+        <!-- Contact Section -->
+    <section id="convertir" class="contact section">
 
-    <!-- Section Title -->
-    <div class="container section-title" data-aos="fade-up">
-        <h2>Convetir</h2>
-        <p>Proporciona tu código o archivo Java para convertirlo a diagramas UML.</p>
-    </div><!-- End Section Title -->
+        <!-- Section Title -->
+        <div class="container section-title" data-aos="fade-up">
+            <h2>Convetir</h2>
+            <p>Proporciona tu código o archivo Java para convertirlo a diagramas UML.</p>
+        </div><!-- End Section Title -->
+        
 
-    <div class="container" data-aos="fade-up" data-aos-delay="100">
-        <div class="row gy-4">
-            <!-- Cuadros de texto para ingresar código -->
-            <div class="col-lg-6">
-                <form action="" method="post" class="php-code-form" data-aos="fade-up" data-aos-delay="200">
-                    <div class="form-group">
-                        <label for="inputCode1">Código 1:</label>
-                        <textarea id="inputCode1" name="code1" class="form-control" rows="6" placeholder="Ingresa tu código aquí..."></textarea>
-                    </div>
-                    <div class="form-group mt-3">
-                        <label for="inputCode2">Código 2:</label>
-                        <textarea id="inputCode2" name="code2" class="form-control" rows="6" placeholder="Ingresa tu código aquí..."></textarea>
-                    </div>
-                    <div class="text-center mt-3">
-                        <button type="submit" class="btn btn-primary">Enviar Código</button>
-                    </div>
-                </form>
+        <!-- Formulario para ingresar el nombre de usuario y seleccionar repositorio -->
+        <div class="form-container">
+            <h4 class="section-title">Obtener Archivos de GitHub</h4>
+            <div class="form-group">
+                <label for="github-username">Nombre de usuario de GitHub:</label>
+                <input type="text" id="github-username" class="form-control" placeholder="Ingresa tu nombre de usuario de GitHub" required>
             </div>
-
-            <!-- Imagen a la derecha -->
-            <div class="col-lg-6 text-center" data-aos="fade-up" data-aos-delay="300">
-                <img src="https://d2slcw3kip6qmk.cloudfront.net/marketing/pages/chart/class-diagram-for-ATM-system-UML/Class-Diagram-ATM-system-750x660.png" alt="Contact Image" class="img-fluid rounded shadow">
+        
+            <div class="form-group">
+                <label for="repo-select">Selecciona un repositorio:</label>
+                <select id="repo-select" class="form-control" disabled>
+                    <option value="">Selecciona un repositorio</option>
+                </select>
+            </div>
+        
+            <div class="form-group">
+                <label for="file-select">Selecciona un archivo .java:</label>
+                <select id="file-select" class="form-control" disabled>
+                    <option value="">Selecciona un archivo</option>
+                </select>
+            </div>
+        
+            <div class="button-group">
+                <button id="load-repos" class="btn btn-primary">Cargar Repositorios</button>
+                <button id="load-file" class="btn btn-secondary" disabled>Cargar archivo</button>
             </div>
         </div>
-    </div>
+        
+        <div id="file-content" style="margin-top: 20px; font-family: monospace; white-space: pre-wrap;"></div>
+        <br><br>
+        <div class="container" data-aos="fade-up" data-aos-delay="100">
+            <div class="row gy-4">
+                <div class="col-lg-6">
+                    <form action="" method="post" class="php-code-form" data-aos="fade-up" data-aos-delay="200">
+                        <div class="form-group">
+                            <label for="inputCode1">Código 1:</label>
+                            <textarea id="inputCode1" name="code1" class="form-control code-input" rows="6" placeholder="Ingresa tu código aquí..."></textarea>
+                        </div>
+                        <div class="form-group mt-3">
+                            <label for="inputCode2">Código 2:</label>
+                            <textarea id="inputCode2" name="code2" class="form-control code-input" rows="6" placeholder="Ingresa tu código aquí..."></textarea>
+                        </div>
+                        <div class="form-group mt-3">
+                            <label for="inputCode3">Código 3:</label>
+                            <textarea id="inputCode3" name="code3" class="form-control code-input" rows="6" placeholder="Ingresa tu código aquí..."></textarea>
+                        </div>
+                        <div id="code-container">
+                            <!-- Los campos generados dinámicamente se agregarán aquí -->
+                        </div>
+                        <div class="text-center mt-3">
+                            <button type="submit" class="btn btn-primary">Enviar Código</button>
+                        </div>
+                    </form>
+                </div>
+        
+                <div class="col-lg-6 text-center" data-aos="fade-up" data-aos-delay="300">
+                    <img src="https://d2slcw3kip6qmk.cloudfront.net/marketing/pages/chart/class-diagram-for-ATM-system-UML/Class-Diagram-ATM-system-750x660.png" alt="Contact Image" class="img-fluid rounded shadow">
+                </div>
+            </div>
+        </div>
 
-</section><!-- /Contact Section -->
+    </section><!-- /Contact Section -->
 
 
     </main>
