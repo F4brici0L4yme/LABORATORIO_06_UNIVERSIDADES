@@ -40,8 +40,8 @@
     <div class="row justify-content-center">
       <div class="col-lg-6">
         <h2>Inicia Sesión</h2>
-        <p>Accede a tu cuenta para empezar a generar driagramas UML.</p><br>
-        <form action="" method="post" class="php-auth-form">
+        <p>Accede a tu cuenta para empezar a generar diagramas UML.</p><br>
+        <form id="login-form" method="post" class="php-auth-form">
           <div class="row gy-3">
             <div class="col-12">
               <input type="text" name="username" class="form-control" placeholder="Nombre de Usuario" required="">
@@ -60,10 +60,6 @@
 
 </section><!-- /Hero Section -->
 
-
-
-    
-
   </main>
 
   <footer id="footer" class="footer dark-background">
@@ -80,5 +76,13 @@
   <script src="assets/vendor/aos/aos.js"></script>
   <script src="assets/vendor/glightbox/js/glightbox.min.js"></script>
   <script src="assets/js/main.js"></script>
+  <script>   
+    const loginForm = document.getElementById('login-form');
+    
+    loginForm.addEventListener('submit', function(event) {
+      event.preventDefault();
+      window.location.href = 'general.html';
+    });
+  </script>
 </body>
 </html>
