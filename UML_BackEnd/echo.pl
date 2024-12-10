@@ -1,7 +1,9 @@
-#!C:/Strawberry/perl/bin/perl.exe
+#!/usr/bin/perl
+
 use strict;
 use warnings;
 use utf8;
+
 use open ':std', ':encoding(UTF-8)';
 binmode STDOUT, ':utf8';
 
@@ -61,7 +63,6 @@ Content-type: text/html
             </div>
         </div>
 
-        <!-- Sección de Clases -->
         <div class="panel panel-default">
             <div class="panel-heading">
                 <h4 class="panel-title" data-toggle="collapse" data-target="#classBox">Clases</h4>
