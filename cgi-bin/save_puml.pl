@@ -1,59 +1,62 @@
 #!/usr/bin/perl -w
 use strict;
 use warnings;
-use CGI;
+use File::Basename;
 use DBI;
 
-my $cgi = CGI->new;
-print $cgi->header('text/html');  # Usar correctamente el objeto CGI
+# Configuración de la carpeta y base de datos
+my $input_dir = "../puml_files"; # Cambia esta ruta según tu entorno
+my $dsn = "DBI:mysql:database=puml_history;host=localhost";
+my $db_user = "root";
+my $db_password = "";
 
-# Obtener datos del formulario
-my $filename = $cgi->param('filename');
-my $content = $cgi->param('content');
-
-# Validar parámetros
-if (!$filename || !$content) {
-    print "Error: Parámetros 'filename' y 'content' son obligatorios.\n";
-    exit;
+# Obtener el user_id como parámetro (esto debe ser proporcionado, por ejemplo, desde una sesión)
+my $user_id = 1; # Supone que se pasa como argumento en la línea de comandos
+if (!$user_id) {
+    die "Error: Se debe proporcionar un user_id como argumento.\n";
 }
 
 # Conexión a la base de datos
-my $dsn = "DBI:mysql:database=puml_history;host=localhost";
-my $user = "root";
-my $password = "root_password";
-
-my $dbh = DBI->connect($dsn, $user, $password, { RaiseError => 1, AutoCommit => 1 })
+my $dbh = DBI->connect($dsn, $db_user, $db_password, { RaiseError => 1, AutoCommit => 1 })
     or die "No se pudo conectar a la base de datos: $DBI::errstr\n";
 
-# Insertar datos en la tabla
-my $sth = $dbh->prepare("INSERT INTO files (filename, content) VALUES (?, ?)")
-    or die "Error preparando la consulta: $DBI::errstr\n";
+# Verificar si el user_id existe
+my $sth_check_user = $dbh->prepare("SELECT id FROM users WHERE id = ?")
+    or die "Error preparando la consulta de verificación de usuario: $DBI::errstr\n";
+$sth_check_user->execute($user_id);
+if (!$sth_check_user->fetchrow_array) {
+    die "Error: El user_id '$user_id' no existe en la base de datos.\n";
+}
+$sth_check_user->finish;
 
-$sth->execute($filename, $content)
-    or die "Error ejecutando la consulta: $DBI::errstr\n";
+# Preparar consulta de inserción
+my $sth = $dbh->prepare("INSERT INTO files (filename, content, user_id) VALUES (?, ?, ?)")
+    or die "Error preparando la consulta de inserción: $DBI::errstr\n";
 
-print << "FORM";
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Historial PUML</title>
-</head>
-<body>
-    <h1>Subir Archivo PUML</h1>
-    <form action="../cgi-bin/save_puml.pl" method="get">
-        <label for="filename">Nombre del Archivo:</label>
-        <input type="text" id="filename" name="filename" required><br><br>
-        <label for="content">Contenido:</label><br>
-        <textarea id="content" name="content" rows="10" cols="50" required></textarea><br><br>
-        <button type="submit">Guardar</button>
-    </form>
-    <hr>
-    <h2>Ver Historial</h2>
-    <a href="../cgi-bin/fetch_puml_history.pl">Ver Historial de Archivos PUML</a>
-    <h2>Archivo guardado</h2>
-</body>
-</html>
-FORM
+# Leer archivos .puml de la carpeta
+opendir(my $dh, $input_dir) or die "No se puede abrir el directorio '$input_dir': $!\n";
+while (my $file = readdir($dh)) {
+    next unless ($file =~ /\.puml$/); # Procesar solo archivos .puml
+    my $filepath = "$input_dir/$file";
+
+    # Leer contenido del archivo
+    open(my $fh, '<', $filepath) or die "No se pudo abrir el archivo '$filepath': $!\n";
+    my $content = do { local $/; <$fh> }; # Leer todo el contenido del archivo
+    close($fh);
+
+    # Guardar en la base de datos
+    eval {
+        $sth->execute($file, $content, $user_id);
+        print "Archivo '$file' guardado en la base de datos con user_id '$user_id'.\n";
+    };
+    if ($@) {
+        warn "No se pudo guardar el archivo '$file': $@\n";
+    }
+}
+closedir($dh);
+
+# Cerrar conexión a la base de datos
 $sth->finish;
 $dbh->disconnect;
+
+print "Todos los archivos .puml procesados.\n";

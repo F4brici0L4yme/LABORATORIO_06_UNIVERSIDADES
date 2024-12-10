@@ -12,7 +12,7 @@ RUN apt-get update && \
 RUN a2enmod cgid
 
 # Crear directorios necesarios y ajustar permisos
-RUN mkdir -p /usr/lib/cgi-bin /var/www/html /var/lib/mysql /run/mysqld && \
+RUN mkdir -p /usr/lib/cgi-bin /usr/lib/puml_files /var/www/html /var/lib/mysql /run/mysqld && \
     chown -R mysql:mysql /var/lib/mysql /run/mysqld && \
     chmod -R 755 /usr/lib/cgi-bin && \
     chmod -R 755 /var/www/html
@@ -24,6 +24,7 @@ RUN mariadb-install-db --user=mysql --datadir=/var/lib/mysql && \
 # Copiar scripts CGI y archivos HTML
 COPY ./cgi-bin/ /usr/lib/cgi-bin/
 COPY ./html/ /var/www/html/
+COPY ./puml_files/ /usr/lib/puml_files/
 
 # Copiar el script SQL de inicialización y ajustar permisos
 COPY ./init_db.sql /docker-entrypoint-initdb.d/

@@ -1,0 +1,12 @@
+@startuml
+
+class User {
+    +id : int
+    +getName() : String
+}
+class Product {
+    +id : int
+    +price : float
+}
+User --> Product : buys
+@enduml

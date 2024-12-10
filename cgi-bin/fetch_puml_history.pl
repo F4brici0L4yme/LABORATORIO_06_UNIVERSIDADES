@@ -11,7 +11,7 @@ print $cgi->header('text/html');
 # Conexión a la base de datos
 my $dsn = "DBI:mysql:database=puml_history;host=localhost";
 my $user = "root";
-my $password = "root_password";
+my $password = "";
 
 my $dbh = DBI->connect($dsn, $user, $password, { RaiseError => 1, AutoCommit => 1 });
 
@@ -22,7 +22,6 @@ $sth->execute();
 print "<html><head><title>Historial de Archivos PUML</title></head><body>";
 print "<h1>Historial de Archivos PUML</h1>";
 print "<table border='1'><tr><th>Nombre del Archivo</th><th>Fecha de creacion</th></tr>";
-
 while (my $row = $sth->fetchrow_hashref) {
     print "<tr><td>$row->{filename}</td><td>$row->{created_at}</td></tr>";
 }

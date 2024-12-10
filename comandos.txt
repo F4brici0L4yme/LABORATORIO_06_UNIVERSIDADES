@@ -1,7 +1,8 @@
-paso 1: Copiar este comando para crear la imagen.
+1 Crear la imagen
 
-docker build -t pruebas .
+docker build -t img .
+ 
+2 Crear el contenedor en base a la imagen
 
-paso 2: copiar este comando para crear el contenerdor.
-
-docker run -d --name pruebazzz -p 8096:80 pruebas
+docker run -d --name pweb1 -p 8089:80 img
+ 
