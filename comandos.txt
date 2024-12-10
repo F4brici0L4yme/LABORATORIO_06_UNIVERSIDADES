@@ -6,3 +6,9 @@ docker build -t img .
 
 docker run -d --name pweb1 -p 8089:80 img
  
+Docker exec -it pweb1 bash
+
+mysql -u root -p
+use puml_history;
+select * from users;
+select * from files;
