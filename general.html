@@ -144,5 +144,131 @@
     <script src="assets/vendor/aos/aos.js"></script>
     <script src="assets/vendor/glightbox/js/glightbox.min.js"></script>
     <script src="assets/js/main.js"></script>
+    <script>
+        const loadReposButton = document.getElementById('load-repos');
+        const loadFileButton = document.getElementById('load-file');
+        const usernameInput = document.getElementById('github-username');
+        const repoSelect = document.getElementById('repo-select');
+        const fileSelect = document.getElementById('file-select');
+        const fileContentDiv = document.getElementById('file-content');
+        const apiUrl = 'https://api.github.com';
+        const codeContainer = document.getElementById('code-container');
+
+        function setInitialFieldHeight() {
+            const initialFields = document.querySelectorAll('.code-input');
+            initialFields.forEach(field => {
+                field.rows = 4;
+            });
+        }
+
+        loadReposButton.addEventListener('click', () => {
+            const username = usernameInput.value;
+            if (!username) {
+                alert('Por favor ingresa tu nombre de usuario de GitHub');
+                return;
+            }
+    
+            fetch(`${apiUrl}/users/${username}/repos?type=all`)
+                .then(response => response.json())
+                .then(data => {
+                    repoSelect.innerHTML = '<option value="">Selecciona un repositorio</option>';
+                    if (data.length > 0) {
+                        data.forEach(repo => {
+                            const option = document.createElement('option');
+                            option.value = repo.name;
+                            option.textContent = repo.name;
+                            repoSelect.appendChild(option);
+                        });
+                        repoSelect.disabled = false;
+                    } else {
+                        alert('No se encontraron repositorios para este usuario.');
+                    }
+                })
+                .catch(error => alert('Error al cargar repositorios: ' + error));
+        });
+
+        repoSelect.addEventListener('change', () => {
+            const username = usernameInput.value;
+            const repo = repoSelect.value;
+            if (!repo) return;
+    
+            function getJavaFiles(path = '') {
+                fetch(`${apiUrl}/repos/${username}/${repo}/contents/${path}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        data.forEach(item => {
+                            if (item.type === 'file' && item.name.endsWith('.java')) {
+                                const option = document.createElement('option');
+                                option.value = item.download_url;
+                                option.textContent = path ? `${path}/${item.name}` : item.name;
+                                fileSelect.appendChild(option);
+                            } else if (item.type === 'dir') {
+                                getJavaFiles(item.path);
+                            }
+                        });
+    
+                        fileSelect.disabled = false;
+                        loadFileButton.disabled = false;
+                    })
+                    .catch(error => alert('Error al cargar archivos del repositorio: ' + error));
+            }
+
+            fileSelect.innerHTML = '<option value="">Selecciona un archivo</option>';
+            getJavaFiles();
+        });
+
+        function loadFileContent(fileUrl, targetElement) {
+            fetch(fileUrl)
+                .then(response => response.text())
+                .then(content => {
+                    targetElement.value = content;
+                })
+                .catch(error => alert('Error al cargar el contenido del archivo: ' + error));
+        }
+
+        function areFirstThreeFieldsFilled() {
+            const fields = document.querySelectorAll('.code-input');
+            return fields.length >= 3 && Array.from(fields).slice(0, 3).every(field => field.value !== "");
+        }
+
+        function createNewCodeField(index) {
+            const newFieldContainer = document.createElement('div');
+            newFieldContainer.classList.add('form-group', 'mt-3');
+    
+            const newLabel = document.createElement('label');
+            newLabel.setAttribute('for', `inputCode${index}`);
+            newLabel.textContent = `Código ${index}:`;
+    
+            const newTextarea = document.createElement('textarea');
+            newTextarea.id = `inputCode${index}`;
+            newTextarea.name = `code${index}`;
+            newTextarea.classList.add('form-control', 'code-input');
+            newTextarea.rows = 4;
+            newTextarea.placeholder = 'Ingresa tu código aquí...';
+    
+            newFieldContainer.appendChild(newLabel);
+            newFieldContainer.appendChild(newTextarea);
+            codeContainer.appendChild(newFieldContainer);
+        }
+
+        loadFileButton.addEventListener('click', () => {
+            const fileUrl = fileSelect.value;
+            if (!fileUrl) return;
+
+            if (areFirstThreeFieldsFilled()) {
+                const nextIndex = document.querySelectorAll('.code-input').length + 1;
+                createNewCodeField(nextIndex);
+            }
+    
+            const fields = document.querySelectorAll('.code-input');
+            const nextField = Array.from(fields).find(field => field.value === "");
+    
+            if (nextField) {
+                loadFileContent(fileUrl, nextField);
+            }
+        });
+
+        window.addEventListener('load', setInitialFieldHeight);
+    </script>
 </body>
 </html>
