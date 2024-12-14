@@ -898,6 +898,14 @@ section,
   margin-right: 8px;
   color: var(--accent-color);
 }
+
+
+
+
+
+
+
+/* parte de mi */
 .info-item {
   background-color: #f9f9f9; /* Fondo suave */
   border: 1px solid #ddd; /* Borde tenue */
@@ -991,3 +999,110 @@ section,
   margin-top: 5px;
   border-radius: 5px;
 }
+.form-container {
+  background: #6c757d;
+  width: 900px;
+  padding: 15px;
+  border-radius: 8px; 
+  border: solid 3px rgba(255, 255, 255, 0.1); 
+  backdrop-filter: blur(25px);
+  box-shadow: 0px 0px 20px 15px rgba(0, 0, 0, 0.1);
+  color: #333;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-left: 30px;
+  padding-right: 30px;
+}
+
+.section-title {
+  text-align: center;
+  font-size: 14px;
+  font-weight: bold;
+  color: #333; 
+}
+
+.form-group {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  position: relative;
+  margin-top: 0px; 
+}
+
+.form-group label {
+  font-size: 13px;
+  color: #333;
+  font-weight: bold;
+  padding: 2px;
+  margin-bottom: 0px;
+}
+
+.btn-get-git {
+  width: 100%;
+  padding: 6px 12px;
+  border-radius: 90px;
+  border: solid 3px transparent;
+  background: rgba(255, 255, 255, 0.1);
+  outline: none;
+  color: #333;
+  font-weight: 500;
+  font-size: 14px;
+}
+
+.form-group select,
+.form-group input {
+  width: 100%;
+  padding: 6px 12px;
+  border-radius: 90px;
+  border: solid 3px transparent;
+  background: rgba(255, 255, 255, 0.1);
+  outline: none;
+  caret-color: white;
+  color: #333;
+  font-weight: 500;
+}
+
+.form-group select:focus,
+.form-group input:focus {
+  border: solid rgba(255, 255, 255, 0.25);
+}
+
+.form-group select option {
+  background: rgba(133, 135, 136, 0.6);
+  color: #333; 
+}
+
+.form-group select option:first-child {
+  background: rgba(255, 255, 255, 0.75);
+  color: rgba(100, 100, 100, 1);
+}
+
+.button-group {
+  display: flex;
+  width: 100%;
+  justify-content: space-between;
+  margin-top: 8px; 
+}
+
+.button-group button {
+  padding: 6px 12px;
+  background: #5758588a;
+  border: none;
+  border-radius: 90px;
+  color: white;
+  font-weight: bold;
+  font-size: 14px;
+  cursor: pointer;
+  outline: transparent 3px solid;
+}
+
+.button-group button:focus {
+  outline: #a0a3a38a;
+}
+
+.button-group button[disabled] {
+  background: rgba(100, 100, 100, 0.5);
+  cursor: not-allowed;
+}
+
