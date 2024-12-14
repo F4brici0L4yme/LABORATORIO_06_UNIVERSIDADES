@@ -4,7 +4,14 @@ ENV DEBIAN_FRONTEND="noninteractive"
 
 # Instalar dependencias necesarias
 RUN apt-get update && \
-    apt-get install -y apache2 perl libcgi-pm-perl libtext-csv-perl mariadb-server mariadb-client libdbd-mysql-perl && \
+    apt-get install -y \
+        apache2 \
+        perl \
+        libcgi-pm-perl \
+        mariadb-server \
+        mariadb-client \
+        libdbd-mysql-perl \
+        libjson-perl && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
@@ -15,7 +22,9 @@ RUN a2enmod cgid
 RUN mkdir -p /usr/lib/cgi-bin /usr/lib/puml_files /var/www/html /var/lib/mysql /run/mysqld && \
     chown -R mysql:mysql /var/lib/mysql /run/mysqld && \
     chmod -R 755 /usr/lib/cgi-bin && \
-    chmod -R 755 /var/www/html
+    chmod -R 755 /var/www/html && \
+    chown -R www-data:www-data /usr/lib/puml_files && \
+    chmod -R 755 /usr/lib/puml_files
 
 # Inicializar MariaDB sin autenticación
 RUN mariadb-install-db --user=mysql --datadir=/var/lib/mysql && \
