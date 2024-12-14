@@ -979,19 +979,7 @@ section,
 .text-center {
   margin-top: 20px;
 }
-.form-container {
-  width: 100%;
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 20px;
-  background-color: #f4f4f4;
-  border-radius: 8px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-}
 
-.form-group {
-  margin-bottom: 20px;
-}
 
 .form-group input, .form-group select {
   width: 100%;
@@ -1000,8 +988,10 @@ section,
   border-radius: 5px;
 }
 .form-container {
-  background: #6c757d;
-  width: 900px;
+  background: #d0d0d1;
+  width: 85%;
+  
+  margin: 0 auto;
   padding: 15px;
   border-radius: 8px; 
   border: solid 3px rgba(255, 255, 255, 0.1); 
@@ -1031,7 +1021,7 @@ section,
 }
 
 .form-group label {
-  font-size: 13px;
+  font-size: 15px;
   color: #333;
   font-weight: bold;
   padding: 2px;
