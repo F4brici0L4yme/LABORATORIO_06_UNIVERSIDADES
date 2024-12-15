@@ -32,7 +32,7 @@ Content-type: text/html
 <div class="container">
     <h1 class="text-center">Generador de Diagramas UML</h1>
     <hr>
-    <form id="umlForm" class="form-horizontal" action="./generate_uml.pl" method="post">
+    <form id="umlForm" class="form-horizontal" action="generate_uml.pl" method="post" enctype="application/x-www-form-urlencoded">
         <!-- Sección de Main -->
         <div class="panel panel-default">
             <div class="panel-heading">

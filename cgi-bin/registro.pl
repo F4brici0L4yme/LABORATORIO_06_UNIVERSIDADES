@@ -16,6 +16,9 @@ my $cgi = CGI->new;
 
 # Crear sesión
 my $session = CGI::Session->new("driver:File", undef, {Directory => '/tmp'}) or die CGI::Session->errstr;
+$session->delete(); # Ensure no residual data
+$session = CGI::Session->new("driver:File", undef, {Directory => '/tmp'}) or die CGI::Session->errstr;
+
 
 # Obtener parámetros del formulario
 my $username = $cgi->param('username');

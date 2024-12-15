@@ -1,15 +1,24 @@
-#!/usr/bin/perl -w
+#!/usr/bin/perl
 use strict;
 use warnings;
 use CGI;
 use CGI::Session;
 
-# Crear objeto CGI
 my $cgi = CGI->new;
+print $cgi->header(-type => 'text/html', -charset => 'UTF-8');
 
-# Recuperar sesión
-my $session = CGI::Session->new("driver:File", $cgi, {Directory => '/tmp'});
-$session->delete();
-$session->flush;
-# Redirigir al formulario de inicio de sesión
-print $cgi->redirect('/index.html');
+# Load the session
+my $session = CGI::Session->new(undef, $cgi, { Directory => '/tmp/sessions' });
+
+if ($session) {
+    $session->delete();  # Delete the session data
+    $session->flush();   # Ensure session is terminated
+    print "<h1>Sesión Cerrada</h1>";
+    print "<p>Has cerrado sesión exitosamente.</p>";
+    print "<a href='/index.html'>Volver al inicio</a>";
+} else {
+    print "<h1>Error</h1>";
+    print "<p>No se encontró ninguna sesión activa.</p>";
+}
+
+exit;

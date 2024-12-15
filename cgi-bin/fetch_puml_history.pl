@@ -5,8 +5,22 @@ use warnings;
 use CGI;
 use DBI;
 use JSON;
+use CGI::Session;
 
 my $cgi = CGI->new;
+
+# Crear sesión
+my $session = CGI::Session->new("driver:File", $cgi, { Directory => '/tmp/sessions' })
+    or die "No se pudo iniciar la sesión: $!";
+
+# Obtener el user_id del usuario conectado
+my $user_id = $session->param('user_id');
+
+if (!$user_id) {
+    print $cgi->header(-type => 'text/html');
+    print "<h1>Error: No has iniciado sesión</h1>";
+    exit;
+}
 
 # Conexión a la base de datos
 my $dsn      = "DBI:mysql:database=puml_history;host=localhost";
@@ -36,8 +50,8 @@ $dbh->disconnect;
 # Subrutina para obtener registros
 sub fetch_records {
     print $cgi->header('application/json');
-    my $sth = $dbh->prepare("SELECT id, filename, created_at FROM files ORDER BY created_at DESC");
-    $sth->execute();
+    my $sth = $dbh->prepare("SELECT id, filename, created_at FROM files WHERE user_id = ? ORDER BY created_at DESC");
+    $sth->execute($user_id);
     my @records;
     while (my $row = $sth->fetchrow_hashref) {
         push @records, $row;
@@ -51,8 +65,8 @@ sub insert_record {
     my $filename = $cgi->param('filename');
 
     eval {
-        $dbh->do("INSERT INTO files (filename, created_at) VALUES (?, NOW())", undef, $filename);
-        print encode_json({ status => 'success', message => 'Record inserted successfully' });
+        $dbh->do("INSERT INTO files (filename, content, user_id, created_at) VALUES (?, '', ?, NOW())", undef, $filename, $user_id);
+        print encode_json({ status => 'success', message => 'Archivo agregado correctamente' });
     } or do {
         print encode_json({ status => 'error', message => $@ });
     };
@@ -65,8 +79,13 @@ sub update_record {
     my $filename = $cgi->param('filename');
 
     eval {
-        $dbh->do("UPDATE files SET filename = ? WHERE id = ?", undef, $filename, $id);
-        print encode_json({ status => 'success', message => 'Record updated successfully' });
+        my $sth = $dbh->prepare("UPDATE files SET filename = ? WHERE id = ? AND user_id = ?");
+        $sth->execute($filename, $id, $user_id);
+        if ($sth->rows > 0) {
+            print encode_json({ status => 'success', message => 'Archivo actualizado correctamente' });
+        } else {
+            print encode_json({ status => 'error', message => 'No se pudo actualizar el archivo' });
+        }
     } or do {
         print encode_json({ status => 'error', message => $@ });
     };
@@ -78,8 +97,13 @@ sub delete_record {
     my $id = $cgi->param('id');
 
     eval {
-        $dbh->do("DELETE FROM files WHERE id = ?", undef, $id);
-        print encode_json({ status => 'success', message => 'Record deleted successfully' });
+        my $sth = $dbh->prepare("DELETE FROM files WHERE id = ? AND user_id = ?");
+        $sth->execute($id, $user_id);
+        if ($sth->rows > 0) {
+            print encode_json({ status => 'success', message => 'Archivo eliminado correctamente' });
+        } else {
+            print encode_json({ status => 'error', message => 'No se pudo eliminar el archivo' });
+        }
     } or do {
         print encode_json({ status => 'error', message => $@ });
     };

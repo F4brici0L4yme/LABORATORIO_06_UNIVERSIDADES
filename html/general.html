@@ -97,7 +97,7 @@
         <div class="container" data-aos="fade-up" data-aos-delay="100">
             <div class="row gy-4">
                 <div class="col-lg-6">
-                    <form action="generator_uml.pl" method="post" class="php-code-form" data-aos="fade-up" data-aos-delay="200">
+                    <form action="generate_uml.pl" method="post" class="php-code-form" data-aos="fade-up" data-aos-delay="200">
                         <div class="form-group">
                             <label for="javaCodeMain">Main:</label>
                             <textarea id="javaCodeMain" name="java_code_main" class="form-control code-input" rows="6" placeholder="Ingresa tu código aquí..."></textarea>
@@ -111,23 +111,41 @@
                             <textarea id="javaCodeInterface" name="java_code_interface" class="form-control code-input" rows="6" placeholder="Ingresa tu código aquí..."></textarea>
                         </div>
                         <div class="form-group mt-3">
-                            <label for="javaCodeClass">clases:</label>
+                            <label for="javaCodeClass">Clases:</label>
                             <textarea id="javaCodeClass" name="java_code_class" class="form-control code-input" rows="6" placeholder="Ingresa tu código aquí..."></textarea>
                         </div>
+                        <div class="form-group mt-3">
+                            <label for="javaCompAggre">Agregacion y Composicion:</label>
+                            <textarea id="javaCompAggre" name="java_comp_aggre" class="form-control code-input" rows="6" placeholder="Ingresa tu código aquí..."></textarea>
+                        </div>
                         <div class="text-center mt-3">
-                            <button type="submit" class="btn-get-started">Enviar Código</button>
+                            <button type="button" id="generate-uml-btn" class="btn-get-started">Generar UML</button>
                         </div>
                     </form>
                 </div>
         
                 <div class="col-lg-6 text-center" data-aos="fade-up" data-aos-delay="300">
-                    <img src="https://d2slcw3kip6qmk.cloudfront.net/marketing/pages/chart/class-diagram-for-ATM-system-UML/Class-Diagram-ATM-system-750x660.png" alt="Contact Image" class="img-fluid rounded shadow">
+                    <img src="https://d2slcw3kip6qmk.cloudfront.net/marketing/pages/chart/class-diagram-for-ATM-system-UML/Class-Diagram-ATM-system-750x660.png" id = "imagen-uml" alt="Contact Image" class="img-fluid rounded shadow">
                 </div>
             </div>
         </div>
 
     </section><!-- /Contact Section -->
-
+    
+    <!-- Modal para Agregación y Composición -->
+     <div id="myModal" class="modal">
+        <div class="modal-content">
+            <p>Ingresar agregación y composición de la siguiente manera:</p>
+            <p>
+                @Agregacion: (nombre de la clase) (cantidad) tiene (nombre de la clase) (cantidad)<br>
+                @Composicion: (nombre de la clase) (cantidad) tiene (nombre de la clase) (cantidad)<br>
+                <br>
+                Ejemplo:<br>
+                @Agregacion: Concesionario 1 tiene Agregacion 0...<br>
+                @Composicion: Concesionario 1...n* tiene Composicion 2..5
+            </p>
+        </div>
+    </div>  
 
     </main>
 
@@ -138,6 +156,19 @@
             </div>
         </div> 
     </footer>
+    <!-- Ícono flotante -->
+    <div id="chat-icon">
+        <img src="https://cdn-icons-png.freepik.com/256/5000/5000672.png?semt=ais_hybrid" alt="apuntes">
+    </div>
+
+    <!-- Ventana de apuntes -->
+    <div id="chat-window">
+        <div id="chat-header">Apuntes</div>
+        <div id="mensajes"></div>
+        <form id="formulario">
+            <input type="text" id="entrada" placeholder="Escribe tu mensaje..." required>
+            <button type="submit">Enviar</button>
+        </form>
 
     <a href="#" id="scroll-top" class="scroll-top d-flex align-items-center justify-content-center"><i class="bi bi-arrow-up-short"></i></a>
     <div id="preloader"></div>
@@ -158,12 +189,13 @@
         const inputInterfaces = document.getElementById('javaCodeInheritance');
         const inputHerencia = document.getElementById('javaCodeInterface');
         const inputClases = document.getElementById('javaCodeClass');
+        const inputCompAggre = document.getElementById('javaCompAggre')
     
         // Variable para rastrear el campo seleccionado
         let selectedInput = null;
     
         // Asignar evento para detectar cuando un campo de texto es seleccionado
-        [inputMain, inputInterfaces, inputHerencia, inputClases].forEach(input => {
+        [inputMain, inputInterfaces, inputHerencia, inputClases, inputCompAggre].forEach(input => {
             input.addEventListener('focus', () => {
                 selectedInput = input;
                 console.log('Campo seleccionado:', selectedInput);  // Verificación en consola
@@ -248,6 +280,121 @@
                     selectedInput.value += '\n' + content;
                 })
                 .catch(error => alert('Error al cargar el contenido del archivo: ' + error));
+        });
+
+        const chatIcon = document.getElementById('chat-icon');
+        const chatWindow = document.getElementById('chat-window');
+        const mensajesDiv = document.getElementById('mensajes');
+        const formulario = document.getElementById('formulario');
+        const entrada = document.getElementById('entrada');
+        const mensajeAnotado = document.getElementById('mensaje-anotado');
+
+        // Mostrar u ocultar el chat
+        chatIcon.addEventListener('click', () => {
+            chatWindow.style.display = chatWindow.style.display === 'flex' ? 'none' : 'flex';
+        });
+
+        // Manejo del formulario de envío
+        formulario.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const mensajeUsuario = entrada.value.trim();
+            if (mensajeUsuario) {
+                agregarMensaje('usuario', mensajeUsuario);
+                entrada.value = '';
+                mostrarNotificacion();
+            }
+        });
+
+        // Función para agregar mensajes al chat
+        function agregarMensaje(clase, texto) {
+            const mensaje = document.createElement('div');
+            mensaje.className = `mensaje ${clase}`;
+            mensaje.innerHTML = `<p>${texto}</p>`;
+            mensajesDiv.appendChild(mensaje);
+            mensajesDiv.scrollTop = mensajesDiv.scrollHeight; // Scroll automático
+        }
+
+        /* imagen uml 
+        document.addEventListener('DOMContentLoaded', () => {
+            const generateUmlButton = document.getElementById('generate-uml-btn');
+            const umlImage = document.getElementById('imagen-uml');
+
+            generateUmlButton.addEventListener('click', () => {
+                umlImage.src = "pum_uml_file/diagrama.svg";
+            });
+        });
+*/
+        /* enviar formulario y recibir imagen */
+        document.addEventListener('DOMContentLoaded', () => {
+        const generateUmlButton = document.getElementById('generate-uml-btn');
+        const form = document.querySelector('.php-code-form');
+        const umlImage = document.getElementById('imagen-uml');
+
+        generateUmlButton.addEventListener('click', async () => {
+            // Recoger los datos del formulario
+            const formData = new FormData(form);
+
+            try {
+                // Enviar los datos a generate_uml.pl
+                const response = await fetch('generate_uml.pl', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (response.ok) {
+                    // Limpiar los campos de texto
+                    form.reset();
+
+                    // Actualizar la imagen del UML si es necesario
+                    umlImage.src = "pum_uml_file/diagrama.svg";
+                } else {
+                    console.error('Error en la solicitud:', response.statusText);
+                }
+            } catch (error) {
+                console.error('Error al enviar los datos:', error);
+            }
+        });
+    });
+
+        /* modal */
+        let modalShown = false;
+
+        // Campo de texto para Agregación y Composición
+
+        const modal = document.getElementById('myModal');
+
+        // Asignar evento para detectar cuando se hace clic o se enfoca en el campo de Agregación y Composición
+        inputCompAggre.addEventListener('focus', () => {
+            if (!modalShown) {
+                modal.style.display = 'flex';  // Muestra el modal
+                modalShown = true;  // Marca que ya se ha mostrado el modal
+            }
+        });
+
+        // Cerrar el modal cuando se haga clic fuera de él o de alguna manera lo quieras cerrar
+        window.onclick = function(event) {
+            if (event.target === modal) {
+                modal.style.display = 'none';  // Cierra el modal cuando se hace clic fuera de él
+            }
+        };
+
+        /* para que no se genere otra ventana */
+        $('#umlForm').on('submit', function(event) {
+            event.preventDefault(); 
+
+            $.ajax({
+                url: 'generate_uml.pl', // URL del segundo script
+                method: 'POST',
+                data: $(this).serialize(), // Serializar datos del formulario
+                success: function(response) {
+                    // Manejar la respuesta del segundo script
+                    $('#resultSection').html(response); // Mostrar la respuesta en una sección
+                },
+                error: function(xhr, status, error) {
+                    console.error('Error:', error);
+                    alert('Hubo un problema al procesar tu solicitud.');
+                }
+            });
         });
     </script>
 </body>
