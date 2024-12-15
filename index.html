@@ -31,17 +31,15 @@
 
   <main class="main">
 
-    <!-- Hero Section -->
+<!-- Hero Section -->
 <section id="hero" class="hero section dark-background">
-
   <img src="assets/img/hero-bg.jpg" alt="" data-aos="fade-in">
-
   <div class="container text-center" data-aos="fade-up" data-aos-delay="100">
     <div class="row justify-content-center">
       <div class="col-lg-6">
         <h2>Inicia Sesión</h2>
-        <p>Accede a tu cuenta para empezar a generar driagramas UML.</p><br>
-        <form action="../cgi-bin/registro.pl" method="post" class="php-auth-form">
+        <p>Accede a tu cuenta para empezar a generar diagramas UML.</p><br>
+        <form action="../cgi-bin/register.pl" method="post" class="php-auth-form">
           <div class="row gy-3">
               <div class="col-12">
                   <input type="text" name="username" class="form-control" placeholder="Nombre de Usuario" required>
@@ -50,20 +48,16 @@
                   <input type="password" name="password" class="form-control" placeholder="Contraseña" required>
               </div>
               <div class="col-12">
-                  <button type="submit" class="btn btn-primary w-100">Registrarse</button>
+                  <button type="submit" class="btn btn-primary w-100">Iniciar Sesión</button>
               </div>
           </div>
       </form>
-      
       </div>
     </div>
   </div>
-
 </section><!-- /Hero Section -->
 
 
-
-    
 
   </main>
 
@@ -81,5 +75,13 @@
   <script src="assets/vendor/aos/aos.js"></script>
   <script src="assets/vendor/glightbox/js/glightbox.min.js"></script>
   <script src="assets/js/main.js"></script>
+  <script>   
+    const loginForm = document.getElementById('login-form');
+    
+    loginForm.addEventListener('submit', function(event) {
+      event.preventDefault();
+      window.location.href = 'general.html';
+    });
+  </script>
 </body>
 </html>
