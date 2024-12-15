@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!C:/Strawberry/perl/bin/perl.exe
 
 use strict;
 use warnings;
@@ -11,6 +11,7 @@ use File::Path qw(make_path);
 my $cgi = CGI->new;
 
 # Leer parámetros enviados por POST
+
 my $java_code_main        = $cgi->param('java_code_main');
 my $java_code_inheritance = $cgi->param('java_code_inheritance');
 my $java_code_interface   = $cgi->param('java_code_interface');
@@ -19,160 +20,136 @@ my $java_code_class       = $cgi->param('java_code_class');
 # Imprimir encabezado HTTP y generar el HTML dinámico
 print $cgi->header(-type => 'text/html', -charset => 'UTF-8');
 
-sub generate_uml_class {
+print"$java_code_class";
+# Función para procesar el código Java y generar el contenido UML
+sub generate_uml {
     my ($java_code) = @_;
 
-    my @lines = split /\n/, $java_code;  # Divide el código Java en líneas
-    my @uml_contents;                   # Almacena las partes extraídas para el UML
-    my $current_class = '';             # Para rastrear la clase actual
+    # Manejar errores si no hay código proporcionado
+    return "" unless $java_code;
 
-    foreach my $line (@lines) {
-        # Ignorar líneas que son comentarios o espacios antes de comentarios
-        next if $line =~ /^\s*(\/\*|\*|\/\/)/;
+    my %uml_entities;
+    my @relationships;
+    my $current_entity;
+    my %class_attributes;
 
-        # Buscar declaraciones de clases
+    foreach my $line (split /\n/, $java_code) {
+        chomp($line);
+
+        # Detectar clases
         if ($line =~ /^\s*public\s+(abstract\s+)?class\s+(\w+)/) {
-            $current_class = $2;  # Captura el nombre de la clase
-            push @uml_contents, "class $current_class {";
+            $current_entity = $2;
+            $uml_entities{$current_entity} = {
+                type       => 'class',
+                name       => $2,
+                abstract   => $1 ? 1 : 0,
+                attributes => [],
+                methods    => []
+            };
         }
-
-        # Buscar atributos
-        elsif ($line =~ /^\s*(public|private|protected)\s+(.*?);/) {
-            my $visibility = $1;  # Captura public, private o protected
-            my $content = $2;     # Captura el contenido después de la visibilidad
-
-            # Determinar el prefijo según la visibilidad
-            my $prefix = $visibility eq 'public'    ? '+' :
-                         $visibility eq 'private'   ? '-' :
-                         $visibility eq 'protected' ? '#' : '';
-
-            # Verificar si tiene la palabra static
-            my $is_static = '';
-            if ($content =~ /\bstatic\s+/) {
-                $is_static = '{static} ';
-                $content =~ s/\bstatic\s+//g;  # Elimina la palabra static del contenido
-            }
-
-            # Ignorar la palabra final si está presente
-            $content =~ s/\bfinal\s+//g;
-
-            # Capturar tipo de dato, nombre y valor
-            if ($content =~ /^(\w+)\s+(\w+)(?:\s*=\s*(.+))?$/) {
-                my $type = $1;         # Captura el tipo de dato
-                my $name = $2;         # Captura el nombre del atributo
-                my $value = $3 // '';  # Captura el valor si existe (o vacío)
-
-                # Si hay un valor, eliminar comillas si existen
-                $value =~ s/^["']//g;
-                $value =~ s/["']$//g;
-
-                # Construir la representación UML del atributo
-                my $uml_line = "\t$prefix$is_static$name: $type";
-                $uml_line .= " = $value" if $value;  # Agregar el valor si existe
-
-                push @uml_contents, $uml_line;
+        # Detectar interfaces
+        elsif ($line =~ /^\s*public\s+interface\s+(\w+)/) {
+            $current_entity = $1;
+            $uml_entities{$current_entity} = {
+                type       => 'interface',
+                name       => $1,
+                attributes => [],
+                methods    => []
+            };
+        }
+        # Detectar herencia de clases
+        elsif ($line =~ /^\s*public\s+class\s+(\w+)\s+extends\s+(\w+)/) {
+            push @relationships, "$1 --|> $2 : hereda";
+        }
+        # Detectar implementación de interfaces
+        elsif ($line =~ /^\s*public\s+class\s+(\w+)\s+implements\s+([\w, ]+)/) {
+            my $class      = $1;
+            my @interfaces = split /,/, $2;
+            foreach my $interface (@interfaces) {
+                $interface =~ s/^\s+|\s+$//g;
+                push @relationships, "$class ..|> $interface : implementa";
             }
         }
+        # Detectar atributos
+        elsif ($line =~ /^\s*(public|private|protected)?\s*(\w+)\s+(\w+);/) {
+            if ($current_entity) {
+                my $visibility = $1 || 'default';
+                my $type       = $2;
+                my $name       = $3;
+                push @{$uml_entities{$current_entity}{attributes}}, {
+                    visibility => $visibility,
+                    type       => $type,
+                    name       => $name
+                };
 
-        # Buscar métodos
-        elsif ($line =~ /^\s*(public|private|protected)\s+(.*?\{)/) {
-            my $visibility = $1;  # Captura public, private o protected
-            my $content = $2;     # Captura el contenido después de la visibilidad
-
-            # Determinar el prefijo según la visibilidad
-            my $prefix = $visibility eq 'public'    ? '+' :
-                         $visibility eq 'private'   ? '-' :
-                         $visibility eq 'protected' ? '#' : '';
-
-            # Verificar si tiene la palabra static
-            my $is_static = '';
-            if ($content =~ /\bstatic\s+/) {
-                $is_static = '{static} ';
-                $content =~ s/\bstatic\s+//g;  # Elimina la palabra static del contenido
+                # Relación de composición
+                if ($type !~ /int|String|boolean|double|float|char|long|short|byte/) {
+                    push @{$class_attributes{$current_entity}}, $type;
+                }
             }
-
-            # Eliminar la palabra abstract si está presente
-            $content =~ s/\babstract\s+//g;
-
-            # Capturar tipo de retorno, nombre del método, y parámetros
-            if ($content =~ /^(\w+)\s+(\w+)\((.*?)\)\s*\{/) {
-                my $return_type = $1;          # Captura el tipo de retorno
-                my $method_name = $2;          # Captura el nombre del método
-                my $parameters = $3;           # Captura los parámetros
-
-                # Construir la representación UML del método
-                push @uml_contents, "\t$prefix$is_static$method_name($parameters) : $return_type";
+        }
+        # Detectar métodos
+        elsif ($line =~ /^\s*(public|private|protected)?\s*(\w+)\s+(\w+)\(.*\)/) {
+            if ($current_entity) {
+                my $visibility  = $1 || 'default';
+                my $return_type = $2;
+                my $method_name = $3;
+                push @{$uml_entities{$current_entity}{methods}}, {
+                    visibility  => $visibility,
+                    return_type => $return_type,
+                    name        => $method_name
+                };
             }
         }
     }
 
-    # Cerrar la clase si fue abierta
-    push @uml_contents, "}" if $current_class;
+    # Generar texto UML
+    my $uml = "";
 
-    # Combinar los contenidos extraídos en un bloque de UML
-    my $uml = join("\n", @uml_contents);
+    foreach my $entity_name (keys %uml_entities) {
+        my $entity = $uml_entities{$entity_name};
+
+        if ($entity->{type} eq 'interface') {
+            $uml .= "interface $entity->{name} {\n";
+        } elsif ($entity->{abstract}) {
+            $uml .= "abstract class $entity->{name} {\n";
+        } else {
+            $uml .= "class $entity->{name} {\n";
+        }
+
+        foreach my $attr (@{$entity->{attributes}}) {
+            my $visibility = $attr->{visibility} eq 'public' ? '+' : '-';
+            $uml .= "    $visibility $attr->{name} : $attr->{type}\n";
+        }
+
+        $uml .= "    --\n" if @{$entity->{attributes}} && @{$entity->{methods}};
+
+        foreach my $method (@{$entity->{methods}}) {
+            my $visibility = $method->{visibility} eq 'public' ? '+' : '-';
+            $uml .= "    $visibility $method->{name}() : $method->{return_type}\n";
+        }
+
+        $uml .= "}\n";
+    }
+
+    foreach my $class (keys %class_attributes) {
+        foreach my $related_class (@{$class_attributes{$class}}) {
+            push @relationships, "$class \"1\" *-- \"1\" $related_class : tiene";
+        }
+    }
+
+    $uml .= join("\n", @relationships) . "\n" if @relationships;
+
     return $uml;
-}
-
-sub generate_uml_interface {
-    my ($java_code) = @_;
-
-    my @lines = split /\n/, $java_code;  # Dividir el código Java en líneas
-    my @uml_contents;                    # Almacena las partes extraídas para el UML
-    my $inside_interface = 0;            # Bandera para saber si estamos dentro de una interfaz
-
-    foreach my $line (@lines) {
-        # Ignorar líneas vacías y comentarios
-        next if $line =~ /^\s*$/ || $line =~ /^\s*(\/\*|\*|\/\/)/;
-
-        # Capturar la declaración de la interfaz
-        if ($line =~ /^\s*(?:public\s+)?interface\s+(\w+)/) {
-            my $interface_name = $1;
-            push @uml_contents, "interface $interface_name {";
-            $inside_interface = 1;  # Marcar que estamos dentro de una interfaz
-            next;
-        }
-
-        # Procesar atributos (siempre son static y tienen valor asignado)
-        if ($inside_interface && $line =~ /^\s*(\w+)\s+(\w+)\s*=\s*([^;]+);/) {
-            my $type = $1;            # Tipo del atributo
-            my $name = $2;            # Nombre del atributo
-            my $value = $3;           # Valor del atributo
-            $value =~ s/['"]//g;      # Eliminar comillas si las tiene
-
-            # Agregar atributo al UML (siempre static)
-            push @uml_contents, "\t+{static} $name: $type = $value";
-            next;
-        }
-
-        # Procesar métodos con su nombre, parámetros y tipo de retorno
-        if ($inside_interface && $line =~ /^\s*(\w+)\s+(\w+)\((.*?)\)\s*;\s*$/) {
-            my ($return_type, $method_name, $params) = ($1, $2, $3);
-
-            # Agregar método al UML
-            push @uml_contents, "\t+$method_name($params): $return_type;";
-            next;
-        }
-
-        # Detectar el cierre de una interfaz
-        if ($line =~ /^\s*}/ && $inside_interface) {
-            push @uml_contents, "}\n";
-            $inside_interface = 0;  # Marcar que hemos salido de la interfaz
-            next;
-        }
-    }
-
-    # Combinar y devolver el UML
-    return join("\n", @uml_contents);
 }
 
 # Generar UML dinámico
 my $uml_content = '@startuml'."\n";
-$uml_content .= generate_uml_class($java_code_inheritance) ."\n";
-$uml_content .= generate_uml_interface($java_code_interface) ."\n";
-$uml_content .= generate_uml_class($java_code_class) ."\n\n";
-$uml_content .= generate_uml_class($java_code_main) ."\n";
-$uml_content .= "\n".'@enduml'."\n";
+$uml_content .= generate_uml($java_code_main);
+$uml_content .= generate_uml($java_code_inheritance);
+$uml_content .= generate_uml($java_code_interface);
+$uml_content .= generate_uml($java_code_class);
+$uml_content .= '@enduml'."\n";
 
 # Ruta para guardar el archivo .puml
 my $output_dir = "E:/xampp/cgi-bin/prueba";
