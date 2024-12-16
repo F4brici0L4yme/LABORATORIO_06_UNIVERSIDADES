@@ -140,8 +140,8 @@
                             <button type="submit" id="generate-uml-btn" class="btn-get-started">Generar UML</button>
                         </div>
                         <div class="text-center mt-3">
-                            <button type="button" id="save-uml-btn" class="btn-get-started">Guardar archivo</button>
-                        </div>
+                        <button type="button" id="save-uml-btn" class="btn-get-started">Guardar archivo</button>
+                    </div>
                     </form>
                     <!-- Contenedor para la imagen SVG -->
                     <div id="umlImageContainer" class="mt-4"></div>
@@ -420,6 +420,7 @@
     <script src="assets/vendor/aos/aos.js"></script>
     <script src="assets/vendor/glightbox/js/glightbox.min.js"></script>
     <script src="assets/js/main.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
         const loadReposButton = document.getElementById('load-repos');
         const loadFileButton = document.getElementById('load-file');
@@ -557,8 +558,82 @@
             mensajesDiv.appendChild(mensaje);
             mensajesDiv.scrollTop = mensajesDiv.scrollHeight; // Scroll automático
         }
-       
+        
+
+        /* enviar formulario y recibir imagen 
         document.addEventListener('DOMContentLoaded', () => {
+            const form = document.querySelector('.php-code-form');
+            const umlImage = document.getElementById('imagen-uml');
+
+            form.addEventListener('submit', async (event) => {
+                // Prevenir la redirección del formulario
+                event.preventDefault();
+
+                // Recoger los datos del formulario
+                const formData = new FormData(form);
+
+                try {
+                    // Enviar los datos al script Perl
+                    const response = await fetch('/cgi-bin/generate_uml.pl', {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    if (response.ok) {
+                        // Limpiar los campos de texto
+                        form.reset();
+
+                        // Actualizar la imagen del UML si es necesario
+                        umlImage.src = "../puml_files/archivo.svg";  // Asegúrate de que esta ruta esté correcta
+                    } else {
+                        console.error('Error en la solicitud:', response.statusText);
+                    }
+                } catch (error) {
+                    console.error('Error al enviar los datos:', error);
+                }
+            });
+        });
+        */
+        $(document).ready(function () {
+            $('#save-uml-btn').click(function () {
+                // Desactivar el botón para evitar clics repetidos mientras se procesa
+                const saveButton = $('#save-uml-btn');
+                saveButton.prop('disabled', true);
+        
+                // Pedir al usuario que ingrese un nombre para el archivo
+                const filename = prompt("Ingresa el nombre del archivo para guardar:");
+        
+                // Verificar si el usuario ingresó un nombre
+                if (filename) {
+                    $.ajax({
+                        url: '../cgi-bin/save_puml.pl', // Ruta al script Perl
+                        type: 'POST',
+                        dataType: 'json', // Se espera una respuesta en formato JSON
+                        data: { filename: filename }, // Enviar el nombre del archivo
+                        success: function (response) {
+                            if (response.status === "success") {
+                                $('#message').html('<span class="success">' + response.message + '</span>');
+                            } else {
+                                $('#message').html('<span class="error">' + response.message + '</span>');
+                            }
+                        },
+                        error: function (xhr, status, error) {
+                            $('#message').html('<span class="error">Hubo un error al guardar el archivo: ' + error + '</span>');
+                        },
+                        complete: function () {
+                            // Reactivar el botón después de completar la petición
+                            saveButton.prop('disabled', false);
+                        }
+                    });
+                } else {
+                    // Si no se ingresó un nombre de archivo
+                    saveButton.prop('disabled', false);
+                    alert("El nombre del archivo es obligatorio.");
+                }
+            });
+        });
+        
+    document.addEventListener('DOMContentLoaded', () => {
     const form = document.querySelector('.php-code-form');
     const umlImageContainer = document.getElementById('umlImageContainer');
 
@@ -604,42 +679,6 @@
     });
 });
 
-$(document).ready(function() {
-    $('#save-uml-btn').click(function() {
-        // Desactivar el botón para evitar clics repetidos mientras se procesa
-        $('#save-uml-btn').prop('disabled', true);
-
-        // Pedir al usuario que ingrese un nombre para el archivo
-        var filename = prompt("Ingresa el nombre del archivo para guardar:");
-
-        // Verificar si el usuario ingresó un nombre
-        if (filename) {
-            $.ajax({
-                url: '../cgi-bin/save_puml.pl', // Ruta al archivo save.pl
-                type: 'POST',
-                data: { filename: filename }, // Enviar el nombre del archivo
-                success: function(response) {
-                    if (response.status === "success") {
-                        $('#message').html('<span class="success">' + response.message + '</span>');
-                    } else {
-                        $('#message').html('<span class="error">' + response.message + '</span>');
-                    }
-                },
-                error: function(xhr, status, error) {
-                    $('#message').html('<span class="error">Hubo un error al guardar el archivo: ' + error + '</span>');
-                },
-                complete: function() {
-                    // Reactivar el botón después de completar la petición
-                    $('#save-uml-btn').prop('disabled', false);
-                }
-            });
-        } else {
-            // Si no se ingresó un nombre de archivo
-            $('#save-uml-btn').prop('disabled', false);
-            alert("El nombre del archivo es obligatorio.");
-        }
-    });
-});
         /* modal */
         let modalShown = false;
 
