@@ -101,34 +101,74 @@
                 <div class="col-lg-6">
                     <form action="/cgi-bin/generate_uml.pl" method="post" class="php-code-form" data-aos="fade-up" data-aos-delay="200">
                         <div class="form-group">
-                            <label for="javaCodeMain">Main:</label>
-                            <textarea id="javaCodeMain" name="java_code_main" class="form-control code-input" rows="6" placeholder="Ingresa tu código aquí..."></textarea>
+                            <div class="collapsible" onclick="toggleCollapse('javaCodeMain')">
+                                <h3>Main:</h3>
+                            </div>
+                            <textarea id="javaCodeMain" name="java_code_main" class="form-control code-input collapsible-content" rows="6" placeholder="Ingresa tu código aquí..." style="display: none;"></textarea>
                         </div>
                         <div class="form-group mt-3">
-                            <label for="javaCodeInheritance">Herencia:</label>
-                            <textarea id="javaCodeInheritance" name="java_code_inheritance" class="form-control code-input" rows="6" placeholder="Ingresa tu código aquí..."></textarea>
+                            <div class="collapsible" onclick="toggleCollapse('javaCodeInheritance')">
+                                <h3>Herencia:</h3>
+                            </div>
+                            <textarea id="javaCodeInheritance" name="java_code_inheritance" class="form-control code-input collapsible-content" rows="6" placeholder="Ingresa tu código aquí..." style="display: none;"></textarea>
                         </div>
                         <div class="form-group mt-3">
-                            <label for="javaCodeInterface">Interfaces:</label>
-                            <textarea id="javaCodeInterface" name="java_code_interface" class="form-control code-input" rows="6" placeholder="Ingresa tu código aquí..."></textarea>
+                            <div class="collapsible" onclick="toggleCollapse('javaCodeInterface')">
+                                <h3>Interfaces:</h3>
+                            </div>
+                            <textarea id="javaCodeInterface" name="java_code_interface" class="form-control code-input collapsible-content" rows="6" placeholder="Ingresa tu código aquí..." style="display: none;"></textarea>
                         </div>
                         <div class="form-group mt-3">
-                            <label for="javaCodeClass">Clases:</label>
-                            <textarea id="javaCodeClass" name="java_code_class" class="form-control code-input" rows="6" placeholder="Ingresa tu código aquí..."></textarea>
+                            <div class="collapsible" onclick="toggleCollapse('javaCodeClass')">
+                                <h3>Clases:</h3>
+                            </div>
+                            <textarea id="javaCodeClass" name="java_code_class" class="form-control code-input collapsible-content" rows="6" placeholder="Ingresa tu código aquí..." style="display: none;"></textarea>
                         </div>
                         <div class="form-group mt-3">
-                            <label for="javaCompAggre">Agregacion y Composicion:</label>
-                            <textarea id="javaCompAggre" name="java_comp_aggre" class="form-control code-input" rows="6" placeholder="Ingresa tu código aquí..."></textarea>
+                            <div class="collapsible" onclick="toggleCollapse('javaCompAggre')">
+                                <h3>Agregacion y Composicion:</h3>
+                            </div>
+                            <textarea id="javaCompAggre" name="java_comp_aggre" class="form-control code-input collapsible-content" rows="6" placeholder="Ingresa tu código aquí..." style="display: none;"></textarea>
                         </div>
                         <div class="text-center mt-3">
                             <button type="submit" id="generate-uml-btn" class="btn-get-started">Generar UML</button>
                         </div>
                     </form>
+                    
+                    <script>
+                        function toggleCollapse(id) {
+                            const textarea = document.getElementById(id);
+                            if (textarea.style.display === "none" || textarea.style.display === "") {
+                                textarea.style.display = "block";
+                            } else {
+                                textarea.style.display = "none";
+                            }
+                        }
+                    </script>
+                    
+                    <style>
+                        .collapsible {
+                            cursor: pointer;
+                            padding: 10px;
+                            background-color: #f1f1f1;
+                            border: 1px solid #ccc;
+                            border-radius: 5px;
+                            margin-bottom: 5px;
+                        }
+                        .collapsible h3 {
+                            margin: 0;
+                            font-size: 16px;
+                        }
+                        .collapsible-content {
+                            margin-top: 10px;
+                        }
+                    </style>
+                    
                 </div>
-        
+                
                 <div class="col-lg-6 text-center" data-aos="fade-up" data-aos-delay="300" id="imagen-uml">
                     <img src="https://d2slcw3kip6qmk.cloudfront.net/marketing/pages/chart/class-diagram-for-ATM-system-UML/Class-Diagram-ATM-system-750x660.png" alt="Imagen predeterminada" class="img-fluid rounded shadow">
-                </div>                
+                </div>                           
             </div>
         </div>
 

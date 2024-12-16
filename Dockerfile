@@ -18,7 +18,6 @@ RUN apt-get update && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-
 # Habilitar módulos CGI de Apache
 RUN a2enmod cgid
 
@@ -30,6 +29,9 @@ RUN mkdir -p /usr/lib/cgi-bin /usr/lib/puml_files /var/www/html /var/lib/mysql /
     chown -R www-data:www-data /usr/lib/puml_files && \
     chmod -R 755 /usr/lib/puml_files && \
     chmod -R 777 /tmp/sessions
+
+# Crear enlace simbólico desde /usr/lib/puml_files a /var/www/html/puml_files
+RUN ln -s /usr/lib/puml_files /var/www/html/puml_files
 
 # Inicializar MariaDB sin autenticación
 RUN mariadb-install-db --user=mysql --datadir=/var/lib/mysql && \
