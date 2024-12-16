@@ -4,7 +4,7 @@ ENV DEBIAN_FRONTEND="noninteractive"
 
 # Instalar dependencias necesarias
 RUN apt-get update && \
-    apt-get install -y \
+    apt-get install -y --no-install-recommends \
         apache2 \
         perl \
         libcgi-pm-perl \
@@ -12,7 +12,9 @@ RUN apt-get update && \
         mariadb-client \
         libdbd-mysql-perl \
         libjson-perl \
-        libcgi-session-perl && \
+        libcgi-session-perl \
+        default-jre-headless \
+        graphviz && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
@@ -37,6 +39,7 @@ RUN mariadb-install-db --user=mysql --datadir=/var/lib/mysql && \
 COPY ./cgi-bin/ /usr/lib/cgi-bin/
 COPY ./html/ /var/www/html/
 COPY ./puml_files/ /usr/lib/puml_files/
+COPY ./plantuml.jar /usr/lib/puml_files/plantuml.jar
 
 # Copiar el script SQL de inicialización y ajustar permisos
 COPY ./init_db.sql /docker-entrypoint-initdb.d/
@@ -44,7 +47,8 @@ RUN chmod 644 /docker-entrypoint-initdb.d/init_db.sql && \
     chown mysql:mysql /docker-entrypoint-initdb.d/init_db.sql
 
 # Ajustar permisos de scripts CGI
-RUN chmod +x /usr/lib/cgi-bin/*.pl
+RUN chmod +x /usr/lib/cgi-bin/*.pl && \
+    chmod +x /usr/lib/puml_files/plantuml.jar
 
 # Comando para iniciar MariaDB sin autentificación y Apache
 CMD ["/bin/bash", "-c", "mysqld --datadir=/var/lib/mysql --user=mysql --skip-grant-tables & sleep 5 && mysql < /docker-entrypoint-initdb.d/init_db.sql && apachectl -D FOREGROUND"]

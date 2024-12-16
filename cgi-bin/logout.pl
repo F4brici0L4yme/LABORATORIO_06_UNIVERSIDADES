@@ -5,20 +5,17 @@ use CGI;
 use CGI::Session;
 
 my $cgi = CGI->new;
-print $cgi->header(-type => 'text/html', -charset => 'UTF-8');
 
-# Load the session
+# Cargar la sesión
 my $session = CGI::Session->new(undef, $cgi, { Directory => '/tmp/sessions' });
 
 if ($session) {
-    $session->delete();  # Delete the session data
-    $session->flush();   # Ensure session is terminated
-    print "<h1>Sesión Cerrada</h1>";
-    print "<p>Has cerrado sesión exitosamente.</p>";
-    print "<a href='/index.html'>Volver al inicio</a>";
+    $session->delete();  # Eliminar los datos de la sesión
+    $session->flush();   # Asegurarse de que la sesión se termine
+    print $cgi->redirect('/index.html');  # Redirigir a un archivo HTML especificado
 } else {
-    print "<h1>Error</h1>";
-    print "<p>No se encontró ninguna sesión activa.</p>";
+    # Si no hay sesión activa, solo redirigir
+    print $cgi->redirect('/index.html');
 }
 
 exit;

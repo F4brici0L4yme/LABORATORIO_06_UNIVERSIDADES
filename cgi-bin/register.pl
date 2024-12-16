@@ -14,8 +14,7 @@ my $password = $cgi->param('password');
 
 # Validación básica de campos
 if (!$username || !$password) {
-    print $cgi->header(-type => 'text/html', -charset => 'UTF-8');
-    print "<h1>Error</h1><p>Todos los campos son obligatorios.</p>";
+    print $cgi->redirect('/index.html');
     exit;
 }
 
@@ -42,14 +41,22 @@ if ($user_id) {
         $session->expire('+1h');
 
         my $cookie = $cgi->cookie(CGISESSID => $session->id);
-        print $cgi->header(-type => 'text/html', -charset => 'UTF-8', -cookie => $cookie);
-        print "<h1>Inicio de Sesión Exitoso</h1>";
-        print "<p>Bienvenido de nuevo, $username.</p>";
-        print "<a href='/cgi-bin/session_check.pl'>Ir a mi perfil</a>";
+        print $cgi->redirect(-uri => '/general.html', -cookie => $cookie);
     } else {
-        # Contraseña incorrecta
+        # Contraseña incorrecta, mostrar alerta y redirigir
         print $cgi->header(-type => 'text/html', -charset => 'UTF-8');
-        print "<h1>Error</h1><p>Contraseña incorrecta. Intenta de nuevo.</p>";
+        print <<'HTML';
+        <html>
+        <head>
+            <script type="text/javascript">
+                alert("Contraseña incorrecta");
+                window.location.href = "/index.html";  // Redirigir a index.html después del alert
+            </script>
+        </head>
+        <body>
+        </body>
+        </html>
+HTML
     }
 } else {
     # Usuario nuevo, registrar e iniciar sesión
@@ -68,10 +75,7 @@ if ($user_id) {
     $session->expire('+1h');
 
     my $cookie = $cgi->cookie(CGISESSID => $session->id);
-    print $cgi->header(-type => 'text/html', -charset => 'UTF-8', -cookie => $cookie);
-    print "<h1>Registro Exitoso</h1>";
-    print "<p>Tu cuenta ha sido creada exitosamente. Bienvenido, $username.</p>";
-    print "<a href='/cgi-bin/session_check.pl'>Ir a mi perfil</a>";
+    print $cgi->redirect(-uri => '/general.html', -cookie => $cookie);
 }
 
 # Limpieza

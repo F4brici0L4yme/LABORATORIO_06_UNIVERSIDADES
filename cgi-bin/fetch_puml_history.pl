@@ -5,22 +5,8 @@ use warnings;
 use CGI;
 use DBI;
 use JSON;
-use CGI::Session;
 
 my $cgi = CGI->new;
-
-# Crear sesión
-my $session = CGI::Session->new("driver:File", $cgi, { Directory => '/tmp/sessions' })
-    or die "No se pudo iniciar la sesión: $!";
-
-# Obtener el user_id del usuario conectado
-my $user_id = $session->param('user_id');
-
-if (!$user_id) {
-    print $cgi->header(-type => 'text/html');
-    print "<h1>Error: No has iniciado sesión</h1>";
-    exit;
-}
 
 # Conexión a la base de datos
 my $dsn      = "DBI:mysql:database=puml_history;host=localhost";
@@ -37,10 +23,10 @@ if ($action eq 'fetch') {
     fetch_records();
 } elsif ($action eq 'insert') {
     insert_record();
-} elsif ($action eq 'update') {
-    update_record();
 } elsif ($action eq 'delete') {
     delete_record();
+} elsif ($action eq 'update') {
+    update_record();
 } else {
     print_html();
 }
@@ -50,8 +36,8 @@ $dbh->disconnect;
 # Subrutina para obtener registros
 sub fetch_records {
     print $cgi->header('application/json');
-    my $sth = $dbh->prepare("SELECT id, filename, created_at FROM files WHERE user_id = ? ORDER BY created_at DESC");
-    $sth->execute($user_id);
+    my $sth = $dbh->prepare("SELECT id, filename, content, created_at FROM files ORDER BY created_at DESC");
+    $sth->execute();
     my @records;
     while (my $row = $sth->fetchrow_hashref) {
         push @records, $row;
@@ -65,27 +51,8 @@ sub insert_record {
     my $filename = $cgi->param('filename');
 
     eval {
-        $dbh->do("INSERT INTO files (filename, content, user_id, created_at) VALUES (?, '', ?, NOW())", undef, $filename, $user_id);
+        $dbh->do("INSERT INTO files (filename, content, created_at) VALUES (?, '', NOW())", undef, $filename);
         print encode_json({ status => 'success', message => 'Archivo agregado correctamente' });
-    } or do {
-        print encode_json({ status => 'error', message => $@ });
-    };
-}
-
-# Subrutina para actualizar un registro
-sub update_record {
-    print $cgi->header('application/json');
-    my $id       = $cgi->param('id');
-    my $filename = $cgi->param('filename');
-
-    eval {
-        my $sth = $dbh->prepare("UPDATE files SET filename = ? WHERE id = ? AND user_id = ?");
-        $sth->execute($filename, $id, $user_id);
-        if ($sth->rows > 0) {
-            print encode_json({ status => 'success', message => 'Archivo actualizado correctamente' });
-        } else {
-            print encode_json({ status => 'error', message => 'No se pudo actualizar el archivo' });
-        }
     } or do {
         print encode_json({ status => 'error', message => $@ });
     };
@@ -97,12 +64,31 @@ sub delete_record {
     my $id = $cgi->param('id');
 
     eval {
-        my $sth = $dbh->prepare("DELETE FROM files WHERE id = ? AND user_id = ?");
-        $sth->execute($id, $user_id);
+        my $sth = $dbh->prepare("DELETE FROM files WHERE id = ?");
+        $sth->execute($id);
         if ($sth->rows > 0) {
             print encode_json({ status => 'success', message => 'Archivo eliminado correctamente' });
         } else {
             print encode_json({ status => 'error', message => 'No se pudo eliminar el archivo' });
+        }
+    } or do {
+        print encode_json({ status => 'error', message => $@ });
+    };
+}
+
+# Subrutina para actualizar un registro
+sub update_record {
+    print $cgi->header('application/json');
+    my $id      = $cgi->param('id');
+    my $content = $cgi->param('content');
+
+    eval {
+        my $sth = $dbh->prepare("UPDATE files SET content = ? WHERE id = ?");
+        $sth->execute($content, $id);
+        if ($sth->rows > 0) {
+            print encode_json({ status => 'success', message => 'Archivo actualizado correctamente' });
+        } else {
+            print encode_json({ status => 'error', message => 'No se pudo actualizar el archivo' });
         }
     } or do {
         print encode_json({ status => 'error', message => $@ });
@@ -119,32 +105,113 @@ sub print_html {
     <meta charset="UTF-8">
     <title>Historial de Archivos PUML</title>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <style>
-        table { border-collapse: collapse; width: 100%; }
-        table, th, td { border: 1px solid black; }
-        th, td { padding: 10px; text-align: center; }
-        .editable { background-color: #f0f0f0; }
-        button { margin: 5px; }
+<style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #18263b; /* Azul oscuro */
+            color: #fff; /* Texto blanco para buen contraste */
+            margin: 0;
+            padding: 0;
+        }
+
+        h1 {
+            text-align: center;
+            margin: 20px 0;
+            font-size: 2rem;
+            color: #f4f4f9; /* Color claro para el título */
+        }
+
+        table {
+            width: 80%;
+            margin: 20px auto;
+            border-collapse: collapse;
+            background-color: #18263b; /* Mismo tono oscuro */
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border: 1px solid #29384d; /* Azul intermedio */
+        }
+
+        th {
+            background-color: #18263b; /* Azul oscuro */
+            color: #f4f4f9; /* Blanco para las cabeceras */
+        }
+
+        td {
+            background-color: #2c3e50; /* Azul más oscuro para las celdas */
+        }
+
+        button {
+            padding: 6px 12px;
+            border: none;
+            background-color: #1f2a3d; /* Azul intermedio oscuro */
+            color: white;
+            cursor: pointer;
+            font-size: 1rem;
+            margin: 5px;
+            border-radius: 4px;
+        }
+
+        button:hover {
+            background-color: #2d3b4c; /* Azul más brillante al pasar el mouse */
+        }
+
+        #edit-modal {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #18263b;
+            padding: 20px;
+            border: 1px solid #29384d;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            width: 80%;
+            max-width: 600px;
+            z-index: 1000;
+        }
+
+        #edit-modal textarea {
+            width: 100%;
+            height: 150px;
+            padding: 10px;
+            font-size: 1rem;
+            border: 1px solid #29384d;
+            background-color: #2c3e50; /* Azul más oscuro */
+            color: #fff; /* Texto en blanco */
+        }
+
+        #edit-modal button {
+            background-color: #1f2a3d; /* Azul intermedio oscuro */
+        }
+
+        #edit-modal button:hover {
+            background-color: #2d3b4c; /* Azul más brillante */
+        }
     </style>
 </head>
 <body>
     <h1>Historial de Archivos PUML</h1>
-    <form id="add-form">
-        <input type="text" id="filename" placeholder="Nombre del Archivo" required>
-        <button type="submit">Agregar Archivo</button>
-    </form>
-    <hr>
     <table id="files-table">
         <thead>
             <tr>
-                <th>ID</th>
                 <th>Nombre del Archivo</th>
-                <th>Fecha de Creación</th>
+                <th>Fecha de Creacion</th>
                 <th>Acciones</th>
             </tr>
         </thead>
         <tbody></tbody>
     </table>
+
+    <div id="edit-modal">
+        <h3>Editar Archivo</h3>
+        <textarea id="edit-content"></textarea>
+        <button id="save-btn">Guardar</button>
+        <button id="cancel-btn">Cancelar</button>
+    </div>
 
     <script>
         function fetchRecords() {
@@ -154,12 +221,15 @@ sub print_html {
                     response.data.forEach(function(record) {
                         rows += `
                             <tr>
-                                <td>${record.id}</td>
-                                <td contenteditable="true" class="editable">${record.filename}</td>
+                                <td>${record.filename}</td>
                                 <td>${record.created_at}</td>
                                 <td>
-                                    <button class="update-btn" data-id="${record.id}">Actualizar</button>
-                                    <button class="delete-btn" data-id="${record.id}">Eliminar</button>
+                                    <button class="edit-btn" data-id="${record.id}" data-content="${record.content}">
+                                        Editar
+                                    </button>
+                                    <button class="delete-btn" data-id="${record.id}">
+                                        Eliminar
+                                    </button>
                                 </td>
                             </tr>
                         `;
@@ -179,14 +249,25 @@ sub print_html {
             }, 'json');
         });
 
-        $(document).on('click', '.update-btn', function() {
-            const row = $(this).closest('tr');
+        $(document).on('click', '.edit-btn', function() {
             const id = $(this).data('id');
-            const filename = row.find('td:eq(1)').text().trim();
-            $.post('', { action: 'update', id: id, filename: filename }, function(response) {
+            const content = $(this).data('content');
+            $('#edit-modal').data('id', id).fadeIn();
+            $('#edit-content').val(content);
+        });
+
+        $('#save-btn').on('click', function() {
+            const id = $('#edit-modal').data('id');
+            const content = $('#edit-content').val();
+            $.post('', { action: 'update', id: id, content: content }, function(response) {
                 alert(response.message);
+                $('#edit-modal').fadeOut();
                 fetchRecords();
             }, 'json');
+        });
+
+        $('#cancel-btn').on('click', function() {
+            $('#edit-modal').fadeOut();
         });
 
         $(document).on('click', '.delete-btn', function() {

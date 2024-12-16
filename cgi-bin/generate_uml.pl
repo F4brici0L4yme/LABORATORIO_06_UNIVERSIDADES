@@ -238,7 +238,6 @@ sub generate_uml_aggre_comp {
     return join("\n",@uml_lines);  # Devolver las líneas generadas
 }
 
-
 # Generar UML dinámico
 my $uml_content = '@startuml'."\n";
 $uml_content .= generate_uml_class($java_code_inheritance) ."\n";
@@ -246,15 +245,6 @@ $uml_content .= generate_uml_interface($java_code_interface) ."\n";
 $uml_content .= generate_uml_class($java_code_class) ."\n\n";
 $uml_content .= generate_uml_class($java_code_main) ."\n";
 $uml_content .= generate_uml_aggre_comp($java_comp_aggre) ."\n";
-$uml_content .= "\n".'@enduml'."\n";
-
-
-# Generar UML dinámico
-my $uml_content = '@startuml'."\n";
-$uml_content .= generate_uml_class($java_code_inheritance) ."\n";
-$uml_content .= generate_uml_interface($java_code_interface) ."\n";
-$uml_content .= generate_uml_class($java_code_class) ."\n\n";
-$uml_content .= generate_uml_class($java_code_main) ."\n";
 $uml_content .= "\n".'@enduml'."\n";
 
 # Ruta para guardar el archivo .puml
@@ -292,3 +282,17 @@ HTML
 # Devolver la salida
 print $cgi->header('application/json');
 
+# Ruta al script que se quiere ejecutar
+my $script_path = 'fast_diagram.pl';
+
+# Ejecuta el script
+my $exit_status = system("perl $script_path");
+
+# Verifica si se ejecutó correctamente
+if ($exit_status == 0) {
+    print "Content-type: text/plain\n\n";
+    print "El script se ejecutó exitosamente.\n";
+} else {
+    print "Content-type: text/plain\n\n";
+    print "Hubo un error al ejecutar el script.\n";
+}

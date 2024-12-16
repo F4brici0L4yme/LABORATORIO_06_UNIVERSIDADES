@@ -31,7 +31,7 @@ if (!$user_id) {
 </head>
 <body>
     <h2 style="color: red;">Error: Debes iniciar sesión para agregar archivos.</h2>
-    <a href="/login.html">Iniciar Sesión</a>
+    <a href="/index.html">Iniciar Sesión</a>
 </body>
 </html>
 HTML
@@ -111,7 +111,7 @@ if ($file_saved) {
 </head>
 <body>
     <div class="message">Archivos guardados exitosamente.</div>
-    <a href="/cgi-bin/session_check.pl">Volver al perfil</a>
+    <a href="/general.html">Volver al perfil</a>
 </body>
 </html>
 HTML
