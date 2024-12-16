@@ -19,10 +19,6 @@ my $java_code_class       = $cgi->param('java_code_class');
 my $java_comp_aggre       = $cgi->param('java_comp_aggre');
 my $java_dependencies     = $cgi->param('java_dependencies');
 
-
-# Imprimir encabezado HTTP y generar el HTML dinámico
-print $cgi->header(-type => 'text/html', -charset => 'UTF-8');
-
 sub generate_uml_class {
     my ($java_code) = @_;
 
@@ -282,24 +278,6 @@ make_path($output_dir) unless -d $output_dir;
 if (open(my $fh, '>', $filepath)) {
     print $fh $uml_content;
     close($fh);
-    print <<HTML;
-    <div class="alert alert-success">
-        <p>Archivo UML generado exitosamente</p>
-        <p><strong>Contenido del archivo .puml:</strong></p>
-        <pre>$uml_content</pre>
-        <p><a type="submit" href="./save_puml.pl">Guardar</a></p>
-        <p><a type="submit" href="./fetch_puml_history.pl">Ver historial</a></p>
-        <p><a type="submit" href="../puml_files/$filename" download class="btn btn-success">Descargar UML</a></p>
-    </div>
-HTML
-
-} else {
-    print <<HTML;
-    <div class="alert alert-danger">
-        <p><strong>Error:</strong> No se pudo crear el archivo UML. Verifique los permisos del directorio.</p>
-    </div>
-HTML
-    exit;
 }
 
 # Devolver la salida
