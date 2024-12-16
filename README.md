@@ -378,20 +378,6 @@ my $exit_status = system("perl $script_path");
 
 ---
 
-### save_puml
-```perl=15
-my $nombre = decode('UTF-8', param('NOMBRE') || '');
-my $tipo_gestion = decode('UTF-8', param('TIPO_GESTION') || '');
-my $estado_licenciamiento = decode('UTF-8', param('ESTADO_LICENCIAMIENTO') || '');
-my $fecha_inicio_licenciamiento = decode('UTF-8', param('FECHA_INICIO') || ''); my $fecha_fin_licenciamiento = decode('UTF-8', param('FECHA_FIN') || '');
-my $periodo_licenciamiento = decode('UTF-8', param('PERIODO_LICENCIAMIENTO') || '');
-my $departamento = decode('UTF-8', param('DEPARTAMENTO') || '');
-my $provincia = decode('UTF-8', param('PROVINCIA') || '');
-my $distrito = decode('UTF-8', param('DISTRITO') || '');
-```
-- En este bloque del código de la línea 16 a la 24 recíbe los parámetros del index para poder realizar la búsqueda en el archivo CVS
-
----
 
 ### fetch_puml_history
 ```perl=7
