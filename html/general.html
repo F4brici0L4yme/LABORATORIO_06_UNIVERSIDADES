@@ -130,12 +130,36 @@
                             </div>
                             <textarea id="javaCompAggre" name="java_comp_aggre" class="form-control code-input collapsible-content" rows="6" placeholder="Ingresa tu código aquí..." style="display: none;"></textarea>
                         </div>
+                        <div class="form-group mt-3">
+                            <div class="collapsible" onclick="toggleCollapse('javaDependencies')">
+                                <h3>Dependencias:</h3>
+                            </div>
+                            <textarea id="javaDependencies" name="java_dependencies" class="form-control code-input collapsible-content" rows="6" placeholder="Ingresa tu código aquí..." style="display: none;"></textarea>
+                        </div>
                         <div class="text-center mt-3">
                             <button type="submit" id="generate-uml-btn" class="btn-get-started">Generar UML</button>
                         </div>
                     </form>
-                    
+                    <!-- Contenedor para la imagen SVG -->
+                    <div id="umlImageContainer" class="mt-4"></div>
+
+                    <style>
+                        #umlImageContainer {
+                          margin-top: 300px; /* Aumenta la distancia entre el formulario y el SVG */
+                          text-align: center; /* Centra el contenido */
+                        }
+                      
+                        #umlImageContainer svg {
+                          width: 80%; /* Reduce el ancho del SVG al 80% */
+                          height: auto; /* Mantiene las proporciones originales */
+                          border: 1px solid #ccc; /* Opcional: Agrega un borde para mejor visualización */
+                          border-radius: 5px; /* Opcional: Bordes redondeados */
+                          padding: 10px; /* Espaciado interno opcional */
+                        }
+                    </style>
+
                     <script>
+
                         function toggleCollapse(id) {
                             const textarea = document.getElementById(id);
                             if (textarea.style.display === "none" || textarea.style.display === "") {
@@ -188,16 +212,191 @@
             </p>
         </div>
     </div>  
+        <!-- Team Section -->
+        <section id="team" class="team section">
+            <!-- Section Title -->
+            <div class="container section-title" data-aos="fade-up">
+            <h2>Team</h2>
+            <p>People who make this web program possible</p>
+            </div><!-- End Section Title -->
+            <div class="container">
+            <div class="row gy-4">
+                <div class="col-lg-6" data-aos="fade-up" data-aos-delay="100">
+                <div class="team-member d-flex align-items-start">
+                    <div class="pic"><img src="team.png" class="img-fluid" alt=""></div>
+                    <div class="member-info">
+                    <h4>Chipana German</h4>
+                    <span>Back-End Developer</span>
+                    <p>Trainer Gym</p>
+                    <div class="social">
+                        <a href=""><i class="bi bi-twitter-x"></i></a>
+                        <a href=""><i class="bi bi-facebook"></i></a>
+                        <a href=""><i class="bi bi-instagram"></i></a>
+                        <a href=""> <i class="bi bi-linkedin"></i> </a>
+                    </div>
+                    </div>
+                </div>
+                </div><!-- End Team Member -->
+                <div class="col-lg-6" data-aos="fade-up" data-aos-delay="200">
+                <div class="team-member d-flex align-items-start">
+                    <div class="pic"><img src="team.png" class="img-fluid" alt=""></div>
+                    <div class="member-info">
+                    <h4>Hilacondo Emanuel</h4>
+                    <span>Back-End Developer</span>
+                    <p>Miembro de la pollito army</p>
+                    <div class="social">
+                        <a href=""><i class="bi bi-twitter-x"></i></a>
+                        <a href=""><i class="bi bi-facebook"></i></a>
+                        <a href=""><i class="bi bi-instagram"></i></a>
+                        <a href=""> <i class="bi bi-linkedin"></i> </a>
+                    </div>
+                    </div>
+                </div>
+                </div>
+    
+                <div class="col-lg-6" data-aos="fade-up" data-aos-delay="300">
+                <div class="team-member d-flex align-items-start">
+                    <div class="pic"><img src="team.png" class="img-fluid" alt=""></div>
+                    <div class="member-info">
+                    <h4>Layme Rodrigo</h4>
+                    <span>Data Engineer</span>
+                    <p>Miembro estrella de la alpaca Army</p>
+                    <div class="social">
+                        <a href=""><i class="bi bi-twitter-x"></i></a>
+                        <a href=""><i class="bi bi-facebook"></i></a>
+                        <a href=""><i class="bi bi-instagram"></i></a>
+                        <a href=""> <i class="bi bi-linkedin"></i> </a>
+                    </div>
+                    </div>
+                </div>
+                </div><!-- End Team Member -->
+    
+                <div class="col-lg-6" data-aos="fade-up" data-aos-delay="400">
+                <div class="team-member d-flex align-items-start">
+                    <div class="pic"><img src="team.png" class="img-fluid" alt=""></div>
+                    <div class="member-info">
+                    <h4>Sullca Mauro</h4>
+                    <span>Front-End Developer</span>
+                    <p>Dibujo que sabe el secreto del gozu</p>
+                    <div class="social">
+                        <a href=""><i class="bi bi-twitter-x"></i></a>
+                        <a href=""><i class="bi bi-facebook"></i></a>
+                        <a href=""><i class="bi bi-instagram"></i></a>
+                        <a href=""> <i class="bi bi-linkedin"></i> </a>
+                    </div>
+                    </div>
+                </div>
+                </div><!-- End Team Member -->
+    
+            </div>
+    
+            </div>
+        </section>
 
+        <style>
+            /* Estilo para el contenedor del equipo */
+            .team {
+                background: linear-gradient(135deg, #b3d4fc, #6c9ef2); /* Fondo degradado profesional */
+                padding: 60px 0;
+            }
+        
+            .team .team-member {
+                border: 1px solid #ddd; /* Borde alrededor de cada tarjeta */
+                border-radius: 15px; /* Bordes redondeados */
+                padding: 30px; /* Más espacio interno */
+                background-color: #ffffff; /* Fondo blanco */
+                box-shadow: 0 8px 15px rgba(0, 0, 0, 0.15); /* Sombra más marcada */
+                transition: transform 0.4s ease, box-shadow 0.4s ease; /* Animaciones suaves */
+                display: flex; /* Diseño en fila */
+                align-items: center; /* Centra la imagen y el texto */
+                margin-bottom: 30px; /* Espaciado entre tarjetas */
+            }
+        
+            .team .team-member:hover {
+                transform: translateY(-8px); /* Efecto de levitación más pronunciado */
+                box-shadow: 0 10px 20px rgba(0, 0, 0, 0.25); /* Sombra más fuerte al pasar el mouse */
+            }
+        
+            .team .team-member img {
+                width: 140px; /* Imagen más grande */
+                height: 140px;
+                margin-right: 25px; /* Espaciado entre la imagen y el texto */
+            }
+        
+            .team .member-info {
+                flex: 1; /* Texto ocupa el espacio restante */
+            }
+        
+            .team .member-info h4 {
+                margin: 0;
+                font-size: 22px; /* Texto más destacado */
+                font-weight: bold;
+                color: #343a40; /* Texto oscuro */
+            }
+        
+            .team .member-info span {
+                display: block;
+                font-size: 16px; /* Tamaño de texto ajustado */
+                color: #6c757d; /* Color de texto secundario */
+                margin-bottom: 10px;
+            }
+        
+            .team .member-info p {
+                font-size: 15px; /* Texto más grande */
+                color: #495057; /* Color más oscuro para el cuerpo del texto */
+                margin: 0 0 15px;
+            }
+        
+            .team .social a {
+                margin-right: 15px;
+                color: #007bff; /* Color azul para los iconos */
+                font-size: 20px; /* Iconos más grandes */
+                transition: color 0.3s ease; /* Animación de color */
+            }
+        
+            .team .social a:hover {
+                color: #0056b3; /* Color más oscuro al pasar el mouse */
+            }
+        
+            /* Estilo para el diseño de dos columnas */
+            @media (min-width: 768px) {
+                .team .team-member {
+                    flex-wrap: nowrap; /* Mantiene los elementos en una fila */
+                }
+            }
+        
+            /* Asegurarse de que haya dos usuarios por línea */
+            @media (min-width: 992px) {
+                .team .row > .col-lg-6 {
+                    flex: 0 0 50%; /* Cada tarjeta ocupa el 50% del ancho */
+                    max-width: 50%;
+                }
+            }
+        </style>     
     </main>
 
     <footer id="footer" class="footer dark-background">
         <div class="container">
+          <h3 class="sitename">Java UML Generator</h3>
+          <p>Proyecto realizado por estudiantes de ingeniería de sistemas ¡UNSA!</p>
+          <div class="social-links d-flex justify-content-center">
+            <a href=""><i class="bi bi-twitter-x"></i></a>
+            <a href=""><i class="bi bi-facebook"></i></a>
+            <a href=""><i class="bi bi-instagram"></i></a>
+            <a href=""><i class="bi bi-skype"></i></a>
+            <a href=""><i class="bi bi-linkedin"></i></a>
+          </div>
+          <div class="container">
             <div class="copyright">
-                <span>Copyright</span> <strong class="px-1 sitename">Regna</strong> <span>All Rights Reserved</span>
+              <span>Copyright</span> <strong class="px-1 sitename">Java UML Generator</strong> <span>All Rights Reserved</span>
             </div>
-        </div> 
+            <div class="credits">
+              Designed by <a href="https://bootstrapmade.com/">BootstrapMade</a>
+            </div>
+          </div>
+        </div>
     </footer>
+
     <!-- Ícono flotante -->
     <div id="chat-icon">
         <img src="https://cdn-icons-png.freepik.com/256/5000/5000672.png?semt=ais_hybrid" alt="apuntes">
@@ -394,7 +593,7 @@
        
         document.addEventListener('DOMContentLoaded', () => {
     const form = document.querySelector('.php-code-form');
-    const umlImageContainer = document.getElementById('imagen-uml');
+    const umlImageContainer = document.getElementById('umlImageContainer');
 
     form.addEventListener('submit', async (event) => {
         // Prevenir la redirección del formulario
@@ -421,7 +620,7 @@
                     // Leer el archivo SVG como texto
                     const svgText = await svgResponse.text();
 
-                    // Eliminar el contenido de la imagen y el div
+                    // Eliminar el contenido de umlImageContainer
                     umlImageContainer.innerHTML = '';
 
                     // Insertar el contenido SVG directamente en el contenedor
@@ -437,10 +636,6 @@
         }
     });
 });
-
-
-
-
 
         /* modal */
         let modalShown = false;

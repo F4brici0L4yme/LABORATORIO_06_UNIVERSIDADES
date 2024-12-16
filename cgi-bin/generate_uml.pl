@@ -17,6 +17,7 @@ my $java_code_inheritance = $cgi->param('java_code_inheritance');
 my $java_code_interface   = $cgi->param('java_code_interface');
 my $java_code_class       = $cgi->param('java_code_class');
 my $java_comp_aggre       = $cgi->param('java_comp_aggre');
+my $java_dependencies     = $cgi->param('java_dependencies');
 
 
 # Imprimir encabezado HTTP y generar el HTML dinámico
@@ -238,6 +239,27 @@ sub generate_uml_aggre_comp {
     return join("\n",@uml_lines);  # Devolver las líneas generadas
 }
 
+sub generate_uml_dependencies {
+    my ($input) = @_;  # Recibe el texto de entrada
+    my @uml_lines;     # Array para almacenar las dependencias generadas
+
+    # Dividir el texto de entrada por líneas para analizar cada una
+    my @lines = split /\n/, $input;
+
+    foreach my $line (@lines) {
+        # Buscar el patrón @Dependencia (sin importar mayúsculas/minúsculas)
+        if ($line =~ /\@dependencia\s*:\s*(\S+)\s+a\s+(\S+)/i) {
+            my $class1 = $1;  # Lo que está antes de "a"
+            my $class2 = $2;  # Lo que está después de "a"
+
+            # Formatear y almacenar la dependencia
+            push @uml_lines, "$class1 --> $class2";
+        }
+    }
+
+    return join("\n",@uml_lines);  # Retornar el array con las dependencias
+}
+
 # Generar UML dinámico
 my $uml_content = '@startuml'."\n";
 $uml_content .= generate_uml_class($java_code_inheritance) ."\n";
@@ -245,6 +267,7 @@ $uml_content .= generate_uml_interface($java_code_interface) ."\n";
 $uml_content .= generate_uml_class($java_code_class) ."\n\n";
 $uml_content .= generate_uml_class($java_code_main) ."\n";
 $uml_content .= generate_uml_aggre_comp($java_comp_aggre) ."\n";
+$uml_content .= generate_uml_dependencies($java_dependencies) ."\n";
 $uml_content .= "\n".'@enduml'."\n";
 
 # Ruta para guardar el archivo .puml
