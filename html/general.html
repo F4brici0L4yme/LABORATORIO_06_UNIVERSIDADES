@@ -28,6 +28,8 @@
             <ul>
             <li><a href="#hero" class="active">Inicio</a></li>
             <li><a href="#convertir">Convertir</a></li>
+            <li><a href="../cgi-bin/fetch_puml_history.pl">Historial</a></li>
+            <li><a href="../cgi-bin/logout.pl">Salir</a></li>
             </ul>
             <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
         </nav>
@@ -97,7 +99,7 @@
         <div class="container" data-aos="fade-up" data-aos-delay="100">
             <div class="row gy-4">
                 <div class="col-lg-6">
-                    <form action="generate_uml.pl" method="post" class="php-code-form" data-aos="fade-up" data-aos-delay="200">
+                    <form action="/cgi-bin/generate_uml.pl" method="post" class="php-code-form" data-aos="fade-up" data-aos-delay="200">
                         <div class="form-group">
                             <label for="javaCodeMain">Main:</label>
                             <textarea id="javaCodeMain" name="java_code_main" class="form-control code-input" rows="6" placeholder="Ingresa tu código aquí..."></textarea>
@@ -119,14 +121,14 @@
                             <textarea id="javaCompAggre" name="java_comp_aggre" class="form-control code-input" rows="6" placeholder="Ingresa tu código aquí..."></textarea>
                         </div>
                         <div class="text-center mt-3">
-                            <button type="button" id="generate-uml-btn" class="btn-get-started">Generar UML</button>
+                            <button type="submit" id="generate-uml-btn" class="btn-get-started">Generar UML</button>
                         </div>
                     </form>
                 </div>
         
-                <div class="col-lg-6 text-center" data-aos="fade-up" data-aos-delay="300">
-                    <img src="https://d2slcw3kip6qmk.cloudfront.net/marketing/pages/chart/class-diagram-for-ATM-system-UML/Class-Diagram-ATM-system-750x660.png" id = "imagen-uml" alt="Contact Image" class="img-fluid rounded shadow">
-                </div>
+                <div class="col-lg-6 text-center" data-aos="fade-up" data-aos-delay="300" id="imagen-uml">
+                    <img src="https://d2slcw3kip6qmk.cloudfront.net/marketing/pages/chart/class-diagram-for-ATM-system-UML/Class-Diagram-ATM-system-750x660.png" alt="Imagen predeterminada" class="img-fluid rounded shadow">
+                </div>                
             </div>
         </div>
 
@@ -314,47 +316,91 @@
             mensajesDiv.scrollTop = mensajesDiv.scrollHeight; // Scroll automático
         }
 
-        /* imagen uml 
+
+        /* enviar formulario y recibir imagen 
         document.addEventListener('DOMContentLoaded', () => {
-            const generateUmlButton = document.getElementById('generate-uml-btn');
+            const form = document.querySelector('.php-code-form');
             const umlImage = document.getElementById('imagen-uml');
 
-            generateUmlButton.addEventListener('click', () => {
-                umlImage.src = "pum_uml_file/diagrama.svg";
+            form.addEventListener('submit', async (event) => {
+                // Prevenir la redirección del formulario
+                event.preventDefault();
+
+                // Recoger los datos del formulario
+                const formData = new FormData(form);
+
+                try {
+                    // Enviar los datos al script Perl
+                    const response = await fetch('/cgi-bin/generate_uml.pl', {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    if (response.ok) {
+                        // Limpiar los campos de texto
+                        form.reset();
+
+                        // Actualizar la imagen del UML si es necesario
+                        umlImage.src = "../puml_files/archivo.svg";  // Asegúrate de que esta ruta esté correcta
+                    } else {
+                        console.error('Error en la solicitud:', response.statusText);
+                    }
+                } catch (error) {
+                    console.error('Error al enviar los datos:', error);
+                }
             });
         });
-*/
-        /* enviar formulario y recibir imagen */
+        */
+       
         document.addEventListener('DOMContentLoaded', () => {
-        const generateUmlButton = document.getElementById('generate-uml-btn');
-        const form = document.querySelector('.php-code-form');
-        const umlImage = document.getElementById('imagen-uml');
+    const form = document.querySelector('.php-code-form');
+    const umlImageContainer = document.getElementById('imagen-uml');
 
-        generateUmlButton.addEventListener('click', async () => {
-            // Recoger los datos del formulario
-            const formData = new FormData(form);
+    form.addEventListener('submit', async (event) => {
+        // Prevenir la redirección del formulario
+        event.preventDefault();
 
-            try {
-                // Enviar los datos a generate_uml.pl
-                const response = await fetch('generate_uml.pl', {
-                    method: 'POST',
-                    body: formData
-                });
+        // Recoger los datos del formulario
+        const formData = new FormData(form);
 
-                if (response.ok) {
-                    // Limpiar los campos de texto
-                    form.reset();
+        try {
+            // Enviar los datos al script Perl
+            const response = await fetch('/cgi-bin/generate_uml.pl', {
+                method: 'POST',
+                body: formData
+            });
 
-                    // Actualizar la imagen del UML si es necesario
-                    umlImage.src = "pum_uml_file/diagrama.svg";
+            if (response.ok) {
+                // Limpiar los campos de texto
+                form.reset();
+
+                // Obtener el archivo SVG generado y reemplazar la imagen
+                const svgResponse = await fetch("../puml_files/archivo.svg"); // Ruta del archivo SVG
+
+                if (svgResponse.ok) {
+                    // Leer el archivo SVG como texto
+                    const svgText = await svgResponse.text();
+
+                    // Eliminar el contenido de la imagen y el div
+                    umlImageContainer.innerHTML = '';
+
+                    // Insertar el contenido SVG directamente en el contenedor
+                    umlImageContainer.innerHTML = svgText;
                 } else {
-                    console.error('Error en la solicitud:', response.statusText);
+                    console.error('Error al obtener el archivo SVG:', svgResponse.statusText);
                 }
-            } catch (error) {
-                console.error('Error al enviar los datos:', error);
+            } else {
+                console.error('Error en la solicitud:', response.statusText);
             }
-        });
+        } catch (error) {
+            console.error('Error al enviar los datos:', error);
+        }
     });
+});
+
+
+
+
 
         /* modal */
         let modalShown = false;
@@ -378,24 +424,6 @@
             }
         };
 
-        /* para que no se genere otra ventana */
-        $('#umlForm').on('submit', function(event) {
-            event.preventDefault(); 
-
-            $.ajax({
-                url: 'generate_uml.pl', // URL del segundo script
-                method: 'POST',
-                data: $(this).serialize(), // Serializar datos del formulario
-                success: function(response) {
-                    // Manejar la respuesta del segundo script
-                    $('#resultSection').html(response); // Mostrar la respuesta en una sección
-                },
-                error: function(xhr, status, error) {
-                    console.error('Error:', error);
-                    alert('Hubo un problema al procesar tu solicitud.');
-                }
-            });
-        });
     </script>
 </body>
 </html>
