@@ -557,42 +557,6 @@
             mensajesDiv.appendChild(mensaje);
             mensajesDiv.scrollTop = mensajesDiv.scrollHeight; // Scroll automático
         }
-
-
-        /* enviar formulario y recibir imagen 
-        document.addEventListener('DOMContentLoaded', () => {
-            const form = document.querySelector('.php-code-form');
-            const umlImage = document.getElementById('imagen-uml');
-
-            form.addEventListener('submit', async (event) => {
-                // Prevenir la redirección del formulario
-                event.preventDefault();
-
-                // Recoger los datos del formulario
-                const formData = new FormData(form);
-
-                try {
-                    // Enviar los datos al script Perl
-                    const response = await fetch('/cgi-bin/generate_uml.pl', {
-                        method: 'POST',
-                        body: formData
-                    });
-
-                    if (response.ok) {
-                        // Limpiar los campos de texto
-                        form.reset();
-
-                        // Actualizar la imagen del UML si es necesario
-                        umlImage.src = "../puml_files/archivo.svg";  // Asegúrate de que esta ruta esté correcta
-                    } else {
-                        console.error('Error en la solicitud:', response.statusText);
-                    }
-                } catch (error) {
-                    console.error('Error al enviar los datos:', error);
-                }
-            });
-        });
-        */
        
         document.addEventListener('DOMContentLoaded', () => {
     const form = document.querySelector('.php-code-form');

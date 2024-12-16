@@ -60,7 +60,7 @@ href="https://www.devanddep.com/tutorial/perl/perl-reading-a-csv-file.html">http
 <tr><td colspan="6">DOCENTES:
 <ul>
 <li>Richart Smith Escobedo Quispe - rescobedoq@unsa.edu.pe</li>
-<li>Carlo Jose Luis Corrales Delgado - ccorrales@unsa.edu.pe</li>
+    <li>Carlo Jose Luis Corrales Delgado - ccorrales@unsa.edu.pe</li>
 </ul>
 </td>
 <tr><td colspan="6">ESTUDIANTES:
@@ -177,73 +177,209 @@ El sistema procesó los archivos Java cargados y los transformó en diagramas UM
 
 ## PERL
 
-### echo
-```perl=15
-  # Leer los parámetros del formulario HTML, decodificando en UTF-8
-my $nombre = decode('UTF-8', param('NOMBRE') || '');
-my $tipo_gestion = decode('UTF-8', param('TIPO_GESTION') || '');
-my $estado_licenciamiento = decode('UTF-8', param('ESTADO_LICENCIAMIENTO') || '');
-my $fecha_inicio_licenciamiento = decode('UTF-8', param('FECHA_INICIO') || ''); my $fecha_fin_licenciamiento = decode('UTF-8', param('FECHA_FIN') || '');
-my $periodo_licenciamiento = decode('UTF-8', param('PERIODO_LICENCIAMIENTO') || '');
-my $departamento = decode('UTF-8', param('DEPARTAMENTO') || '');
-my $provincia = decode('UTF-8', param('PROVINCIA') || '');
-my $distrito = decode('UTF-8', param('DISTRITO') || '');
+### register
+```perl=6
+use DBI;
+use Digest::SHA qw(sha256_hex);
 ```
-- En este bloque del código de la línea 16 a la 24 recíbe los parámetros del index para poder realizar la búsqueda en el archivo CVS
+- DBI: Para interactuar con la base de datos.
+- Digest::SHA: Para cifrar contraseñas utilizando SHA-256.
+
+```perl=12
+my $username = $cgi->param('username');
+my $password = $cgi->param('password');
+```
+- $cgi->param: Recupera los datos del formulario enviados por el usuario, como el nombre de usuario (username) y la contraseña (password).
+
+```perl=22
+my $dsn = "DBI:mysql:database=puml_history;host=localhost;port=3306";
+my $db_user = "root";
+my $db_pass = "";
+my $dbh = DBI->connect($dsn, $db_user, $db_pass, { RaiseError => 1, AutoCommit => 1 })
+    or die "No se pudo conectar a la base de datos: $DBI::errstr";
+```
+- Configura la conexión a una base de datos MySQL llamada puml_history, en el host localhost y puerto 3306.
+- DBI->connect: Establece la conexión con las credenciales del usuario root.
+
+```perl=29
+my $sth_check = $dbh->prepare("SELECT id, password FROM users WHERE username = ?");
+$sth_check->execute($username);
+my ($user_id, $stored_password) = $sth_check->fetchrow_array;
+```
+- Prepara y ejecuta una consulta SQL para verificar si el nombre de usuario ya está registrado.
+- Recupera el ID del usuario y su contraseña cifrada si el usuario existe.
+
+```perl=33
+if ($user_id) {
+    if (sha256_hex($password) eq $stored_password) {
+        my $session = CGI::Session->new(undef, $cgi, { Directory => '/tmp/sessions' })
+            or die CGI::Session->errstr;
+        $session->param('username', $username);
+        $session->param('user_id', $user_id);
+        $session->expire('+1h');
+
+        my $cookie = $cgi->cookie(CGISESSID => $session->id);
+        print $cgi->redirect(-uri => '/general.html', -cookie => $cookie);
+    } else {
+        print $cgi->header(-type => 'text/html', -charset => 'UTF-8');
+        print <<'HTML';
+        <html>
+        <head>
+            <script type="text/javascript">
+                alert("Contraseña incorrecta");
+                window.location.href = "/index.html";  // Redirigir a index.html después del alert
+            </script>
+        </head>
+        <body>
+        </body>
+        </html>
+HTML
+    }
+```
+- sha256_hex($password): Cifra la contraseña ingresada y la compara con la almacenada.
+- Si coinciden:
+  - Inicia sesión para el usuario.
+- Si no coinciden:
+  - Muestra un mensaje de alerta y redirige al usuario de nuevo al formulario.
+
+```perl=63
+my $hashed_password = sha256_hex($password);
+my $sth_insert = $dbh->prepare("INSERT INTO users (username, password) VALUES (?, ?)");
+$sth_insert->execute($username, $hashed_password);
+
+$user_id = $dbh->last_insert_id(undef, undef, "users", undef);
+```
+- Cifra la contraseña y registra al nuevo usuario en la base de datos.
+- Obtiene el ID del nuevo usuario insertado.
+
+
+```perl=71
+my $session = CGI::Session->new(undef, $cgi, { Directory => '/tmp/sessions' })
+    or die CGI::Session->errstr;
+$session->param('username', $username);
+$session->param('user_id', $user_id);
+$session->expire('+1h');
+
+my $cookie = $cgi->cookie(CGISESSID => $session->id);
+print $cgi->redirect(-uri => '/general.html', -cookie => $cookie);
+```
+- Crea una sesión con el nombre de usuario y el ID recién registrado.
+- Redirige al usuario a /general.html tras iniciar sesión.
 
 ---
 
 ### logout
-```perl=15
-  # Leer los parámetros del formulario HTML, decodificando en UTF-8
-my $nombre = decode('UTF-8', param('NOMBRE') || '');
-my $tipo_gestion = decode('UTF-8', param('TIPO_GESTION') || '');
-my $estado_licenciamiento = decode('UTF-8', param('ESTADO_LICENCIAMIENTO') || '');
-my $fecha_inicio_licenciamiento = decode('UTF-8', param('FECHA_INICIO') || ''); my $fecha_fin_licenciamiento = decode('UTF-8', param('FECHA_FIN') || '');
-my $periodo_licenciamiento = decode('UTF-8', param('PERIODO_LICENCIAMIENTO') || '');
-my $departamento = decode('UTF-8', param('DEPARTAMENTO') || '');
-my $provincia = decode('UTF-8', param('PROVINCIA') || '');
-my $distrito = decode('UTF-8', param('DISTRITO') || '');
+```perl=5
+use CGI::Session;
 ```
-- En este bloque del código de la línea 16 a la 24 recíbe los parámetros del index para poder realizar la búsqueda en el archivo CVS
+- use CGI::Session: Proporciona soporte para manejo de sesiones de usuario.
 
----
-
-### registro
-```perl=15
-  # Leer los parámetros del formulario HTML, decodificando en UTF-8
-my $nombre = decode('UTF-8', param('NOMBRE') || '');
-my $tipo_gestion = decode('UTF-8', param('TIPO_GESTION') || '');
-my $estado_licenciamiento = decode('UTF-8', param('ESTADO_LICENCIAMIENTO') || '');
-my $fecha_inicio_licenciamiento = decode('UTF-8', param('FECHA_INICIO') || ''); my $fecha_fin_licenciamiento = decode('UTF-8', param('FECHA_FIN') || '');
-my $periodo_licenciamiento = decode('UTF-8', param('PERIODO_LICENCIAMIENTO') || '');
-my $departamento = decode('UTF-8', param('DEPARTAMENTO') || '');
-my $provincia = decode('UTF-8', param('PROVINCIA') || '');
-my $distrito = decode('UTF-8', param('DISTRITO') || '');
+```perl=10
+my $session = CGI::Session->new(undef, $cgi, { Directory => '/tmp/sessions' });
 ```
-- En este bloque del código de la línea 16 a la 24 recíbe los parámetros del index para poder realizar la búsqueda en el archivo CVS
+- CGI::Session->new: Carga o crea una sesión.
+  - undef: Deja que el módulo determine automáticamente el ID de sesión.
+  - $cgi: Asocia la sesión con los datos enviados por el cliente.
+  - Directory => '/tmp/sessions': Especifica dónde se almacenarán los datos de sesión en el servidor.
+
+```perl=13
+$session->delete();
+$session->flush();
+```
+- $session->delete(): Borra los datos asociados con la sesión en el servidor.
+- $session->flush(): Garantiza que los cambios se guarden y la sesión finalice correctamente.
+
+```perl=15
+print $cgi->redirect('/index.html');
+```
+- $cgi->redirect('/index.html'): Redirige al usuario a la página index.html, una página de inicio o login.
+
 
 ---
 
 ### generate_uml
 ```perl=15
-  # Leer los parámetros del formulario HTML, decodificando en UTF-8
-my $nombre = decode('UTF-8', param('NOMBRE') || '');
-my $tipo_gestion = decode('UTF-8', param('TIPO_GESTION') || '');
-my $estado_licenciamiento = decode('UTF-8', param('ESTADO_LICENCIAMIENTO') || '');
-my $fecha_inicio_licenciamiento = decode('UTF-8', param('FECHA_INICIO') || ''); my $fecha_fin_licenciamiento = decode('UTF-8', param('FECHA_FIN') || '');
-my $periodo_licenciamiento = decode('UTF-8', param('PERIODO_LICENCIAMIENTO') || '');
-my $departamento = decode('UTF-8', param('DEPARTAMENTO') || '');
-my $provincia = decode('UTF-8', param('PROVINCIA') || '');
-my $distrito = decode('UTF-8', param('DISTRITO') || '');
+my $java_code_main        = $cgi->param('java_code_main');
+my $java_code_inheritance = $cgi->param('java_code_inheritance');
+my $java_code_interface   = $cgi->param('java_code_interface');
+my $java_code_class       = $cgi->param('java_code_class');
+my $java_comp_aggre       = $cgi->param('java_comp_aggre');
 ```
-- En este bloque del código de la línea 16 a la 24 recíbe los parámetros del index para poder realizar la búsqueda en el archivo CVS
+- El código obtiene el contenido de varias secciones de código Java enviadas. Estos parámetros se usarán para generar un archivo UML.
+
+```perl=25
+sub generate_uml_class {
+```
+Esta función analiza el código Java y genera representaciones UML para clases:
+
+- Identifica clases, atributos, constructores y métodos.
+- Usa prefijos para indicar visibilidad:
+  - +para público, - para privado, # para protegido.
+- Detecta palabras clave como static y final para incluir en el UML.
+- Cierra la clase si es necesario.
+
+```perl=149
+sub generate_uml_interface {
+```
+Analiza las interfaces Java y genera representaciones UML:
+
+- Captura atributos (siempre static) y métodos de la interfaz.
+- Usa + para indicar métodos públicos.
+- Identifica correctamente el cierre de la interfaz.
+
+```perl=201
+sub generate_uml_aggre_comp {
+```
+Genera relaciones UML de agregación y composición:
+
+- Busca anotaciones específicas en el texto (@Agregación y @Composición).
+- Asocia cardinalidades entre clases, como "1" o "*".
+
+```perl=242
+my $uml_content = '@startuml'."\n";
+$uml_content .= generate_uml_class($java_code_inheritance) ."\n";
+$uml_content .= generate_uml_interface($java_code_interface) ."\n";
+$uml_content .= generate_uml_class($java_code_class) ."\n\n";
+$uml_content .= generate_uml_class($java_code_main) ."\n";
+$uml_content .= generate_uml_aggre_comp($java_comp_aggre) ."\n";
+$uml_content .= "\n".'@enduml'."\n";
+```
+- Combina los UML generados de clases, interfaces y relaciones en un bloque PlantUML, marcando el inicio (@startuml) y el final (@enduml).
+
+```perl=251
+my $output_dir = "/usr/lib/puml_files/";
+my $filename   = "archivo.puml";
+my $filepath   = "$output_dir/$filename";
+
+make_path($output_dir) unless -d $output_dir;
+
+if (open(my $fh, '>', $filepath)) {
+    print $fh $uml_content;
+    close($fh);
+}
+```
+- Guarda el archivo PlantUML (archivo.puml) en un directorio específico.
+- Verifica que el directorio exista o lo crea si no está.
+
+```perl=265
+<p><strong>Contenido del archivo .puml:</strong></p>
+<pre>$uml_content</pre>
+<p><a type="submit" href="../puml_files/$filename" download class="btn btn-success">Descargar UML</a></p>
+```
+- Se muestra un mensaje de éxito con la opción de descargar el archivo UML.
+
+```perl=286
+my $script_path = 'fast_diagram.pl';
+
+
+my $exit_status = system("perl $script_path");
+```
+- Llama a otro script (fast_diagram.pl) para continuar con el procesamiento, como generar diagramas UML basados en el archivo archivo.puml.
 
 ---
 
 ### save_puml
 ```perl=15
-  # Leer los parámetros del formulario HTML, decodificando en UTF-8
 my $nombre = decode('UTF-8', param('NOMBRE') || '');
 my $tipo_gestion = decode('UTF-8', param('TIPO_GESTION') || '');
 my $estado_licenciamiento = decode('UTF-8', param('ESTADO_LICENCIAMIENTO') || '');
@@ -258,31 +394,71 @@ my $distrito = decode('UTF-8', param('DISTRITO') || '');
 ---
 
 ### fetch_puml_history
-```perl=26
- # Configura Text::CSV para archivos CSV con comas y UTF-8
- my $csv = Text::CSV->new({ sep_char => ",", binary => 1, auto_diag => 1 });
- # Abre el archivo CSV en modo UTF-8
- open(my $fh, '<:encoding(UTF-8)', 'Data_Universidades_LAB06.csv') or die "No se pudo abrir el archivo: $!";
-
- # Omitir la primera línea (cabecera)
- my $header = $csv->getline($fh);
+```perl=7
+use JSON;
 ```
-- En la línea 27 se procede a abrir el archivo CVS de las univeridades, nuestro archivo CVS esta divido por comas por eso indicamos a perl que el separador serán las comas, lo siguiente hace que perl haga una búsqueda binaria lo que facilita al momento en el que halla salto de líneas y la última indicación lanza errores cuando algo sale mal al momento de leer el archivo.
-- En la línea 29 se abre el archivo con los estándares UTF - 8 para que acepte las tildes del archivo CVS, en caso haya un error lanza el mensaje de "No se pudo abiri el archivo" y devuelve el error.
-- En la línea 32 recibe la primera fila, lo que permite analizar solo el contenido que nos interesa y para más tarde imprimirlo en el HTML
+- JSON: Se utiliza para enviar y recibir datos en formato JSON entre el servidor y el cliente.
+
+```perl=19
+my $action = $cgi->param('action') || '';
+```
+- El parámetro action recibido desde el frontend determina qué acción del CRUD se ejecutará.
+- Las opciones son fetch, insert, delete, y update.
+
+
+```perl=39
+my $sth = $dbh->prepare("SELECT id, filename, content, created_at FROM files ORDER BY created_at DESC");
+```
+- Realiza una consulta SQL para obtener todos los registros de la tabla files.
+- Los resultados se envían en formato JSON al frontend.
+
+```perl=54
+$dbh->do("INSERT INTO files (filename, content, created_at) VALUES (?, '', NOW())", undef, $filename);
+```
+- Inserta un nuevo registro en la tabla files. Solo requiere el nombre del archivo (filename); el contenido se inicializa vacío.
+
+```perl=67
+my $sth = $dbh->prepare("DELETE FROM files WHERE id = ?");
+$sth->execute($id);
+```
+- Borra un registro específico utilizando su id como identificador.
+
+```perl=86
+my $sth = $dbh->prepare("UPDATE files SET content = ? WHERE id = ?");
+$sth->execute($content, $id);
+```
+- Actualiza el contenido (content) de un archivo específico identificado por su id.
+
+```perl=198
+<table id="files-table">
+        <thead>
+            <tr>
+                <th>Nombre del Archivo</th>
+                <th>Fecha de Creacion</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+</table>
+
+<div id="edit-modal">
+        <h3>Editar Archivo</h3>
+        <textarea id="edit-content"></textarea>
+        <button id="save-btn">Guardar</button>
+        <button id="cancel-btn">Cancelar</button>
+</div>
+```
+- La tabla se utiliza para mostrar los archivos obtenidos de la base de datos, con botones para editar o eliminar cada registro.
+- Una ventana emergente permite editar el contenido de un archivo seleccionado.
 
 ---
      
 ### diagrama_uml
 ```perl=34
-   # Función para convertir las fechas de yyyy-MM-dd a yyyyMMdd
-sub convertir_fecha_a_yyyymmdd {
     my ($fecha) = @_;
     $fecha =~ s/-//g;
     return $fecha;
 }
-
-# Convertir fechas de búsqueda a yyyyMMdd
 $fecha_inicio_licenciamiento = convertir_fecha_a_yyyymmdd($fecha_inicio_licenciamiento);
 $fecha_fin_licenciamiento = convertir_fecha_a_yyyymmdd($fecha_fin_licenciamiento);  
 ```
@@ -290,50 +466,69 @@ $fecha_fin_licenciamiento = convertir_fecha_a_yyyymmdd($fecha_fin_licenciamiento
  
 # 
      
-### session_check
-```perl=45 
-while (my $row = $csv->getline($fh)) {
-    # Extraer los campos directamente, ya en UTF-8
-    my ($codigo, $nombre_u, $tipo, $estado, $inicio, $fin, $periodo, $dpto, $prov, $dist, $ubigeo, $latitud, $longitud, $fecha_corte) = @$row;
+### fast_diagram_uml
+```perl=7
+my $puml_file = '../puml_files/archivo.puml';
 
-    # Aplicamos filtros según los parámetros ingresados por el usuario en el formulario HTML
-    if (($nombre_u =~ /\Q$nombre\E/i) && 
-        ($tipo_gestion eq '' || $tipo =~ /\Q$tipo_gestion\E/i) &&   
-        ($estado_licenciamiento eq '' || $estado =~ /\Q$estado_licenciamiento\E/i) && 
-        ($fecha_inicio_licenciamiento eq '' || $inicio =~ /\Q$fecha_inicio_licenciamiento\E/i) && 
-        ($fecha_fin_licenciamiento eq '' || $fin =~ /\Q$fecha_fin_licenciamiento\E/i) &&
-        ($periodo_licenciamiento eq '' || $periodo =~ /\Q$periodo_licenciamiento\E/i) &&  
-        ($departamento eq '' || $dpto =~ /\Q$departamento\E/i) &&   
-        ($provincia eq '' || $prov =~ /\Q$provincia\E/i) &&       
-        ($distrito eq '' || $dist =~ /\Q$distrito\E/i)) {
 
-        # Si todos los filtros coinciden, agrega la fila actual (@$row) al arreglo @universidades
-        push(@universidades, $row);
-    }
-}
-close $fh;     
+my $javapuml_path = '../puml_files/plantuml.jar';
+
+
+my $output_html = '../var/www/html/general.html';
 ```
-- En la línea 45 se abre un bucle para que revise cada fila del archivo CVS, después la variable $row guarda la referencia de un arreglo que contiene los valores de la fila actual y en la línea 47 desreferencia la referencia al arreglo y lo divide cada valor de la lista en una variable.
+- $puml_file: Es la ruta relativa del archivo .puml que contiene el código de diagrama que será procesado por PlantUML.
+- $javapuml_path: Ruta al archivo .jar de PlantUML que se ejecutará para generar el diagrama.
+- $output_html: Ruta donde se generará el archivo HTML con el mensaje de éxito o error.
+
+```perl=7
+my $puml_file = '../puml_files/archivo.puml';
 
 
+my $javapuml_path = '../puml_files/plantuml.jar';
 
-- En la línea 50 se abre un condiconal que verifica con expresiones regulares si el valor es el correspondiente a lo buscado por el usuario o en caso no busque nada podra pasar de manera correcta. 
-  
-<details>
-     
-<summary>Explicación de las expresiones regulares</summary>
-<pre>
-La expresión regular revisa si la variable es la misma buscada en el parámetro
-enviada por el formulario HTML.(/\Q$departamento\E/i) en esta expresión la Q se
-escapa automáticamente todos los caracteres especiales dentro del patrón, de 
-modo que se traten literalmente y no como operadores de expresiones regulares.
-La E cierra la Q y la i se encargá  de no hacer sensible a mayúsculas 0
-minúsculas cuando se esta comparando.
-</pre>
-     
-</details>
-     
-- En la línea 61 si todos los parámetros son correctos se guardará en el arreglo de universidades y en la 64 cierra el archivo CVS para evitar inconvenientes en lo que sigue de código
+
+my $output_html = '../var/www/html/general.html';
+```
+- $puml_file: Es la ruta relativa del archivo .puml que contiene el código de diagrama que será procesado por PlantUML.
+- $javapuml_path: Ruta al archivo .jar de PlantUML que se ejecutará para generar el diagrama.
+- $output_html: Ruta donde se generará el archivo HTML con el mensaje de éxito o error.
+
+```perl=16
+unless (-e $puml_file) {
+    escribir_html($output_html, { mensaje => "El archivo no se pudo generar." });
+    die "El archivo $puml_file no existe.\n";
+}
+```
+- -e: Verifica si el archivo .puml existe en la ruta especificada.
+- Si el archivo no existe, se llama a la función escribir_html para generar un archivo HTML con el mensaje de error y luego termina la ejecución del script con die.
+
+```perl=23
+my $plantuml_command = "java -jar $javapuml_path -tsvg $puml_file -o ../puml_files";
+```
+- Este comando ejecuta el archivo .jar de PlantUML mediante Java, indicando que el archivo .puml debe ser procesado y que el resultado será un archivo SVG.
+- -tsvg: Define el formato de salida como SVG.
+- -o: Especifica el directorio de salida.
+
+```perl=23
+sub escribir_html {
+    my ($ruta, $data) = @_;
+    open my $fh, '>', $ruta or die "No se pudo abrir el archivo $ruta: $!\n";
+    print $fh to_json($data, { pretty => 1 });
+    close $fh;
+}
+```
+- Esta función recibe una ruta de archivo (ruta) y un hash (data) con el mensaje.
+- Abre el archivo HTML para escritura, convierte el hash a formato JSON utilizando to_json y escribe el contenido en el archivo.
+- pretty => 1: Indica que el JSON debe ser formateado de manera legible (con saltos de línea y sangrías).
+
+
+```perl=23
+my $plantuml_command = "java -jar $javapuml_path -tsvg $puml_file -o ../puml_files";
+```
+- Este comando ejecuta el archivo .jar de PlantUML mediante Java, indicando que el archivo .puml debe ser procesado y que el resultado será un archivo SVG.
+- -tsvg: Define el formato de salida como SVG.
+- -o: Especifica el directorio de salida.
+
 # 
      
 
@@ -341,57 +536,339 @@ minúsculas cuando se esta comparando.
 ## HTML
 
 ### index
-![HTML_COMP]
-```html
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="./styles.css">
-    <title>Universidades Peruanas</title>
-</head>
+```html=5
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Generador de Diagramas UML</title>
+<link href="https://fonts.googleapis.com/css2?family=Roboto...&display=swap" rel="stylesheet">
+<link href="assets/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+<link href="assets/css/main.css" rel="stylesheet">
 ```
-- Esta sección establece la configuración básica de un documento HTML. Declara que es HTML5, define el idioma como español, y especifica la codificación UTF-8 para soportar caracteres especiales. Incluye metadatos para que la página sea responsive, enlaza un archivo de estilos externo `(styles.css)` para aplicar diseño, y establece el título "Universidades Peruanas", que aparece en la pestaña del navegador.
+- <meta charset="utf-8">: Define la codificación de caracteres del documento.
+- <meta name="viewport">: Hace que el sitio sea responsivo, ajustando el diseño a diferentes tamaños de pantalla.
+Fuentes y CSS: Se incluyen enlaces a fuentes de Google (Roboto, Poppins) y varios archivos CSS, incluidos Bootstrap y estilos personalizados de la página (main.css).
+
+```html=35
+<section id="hero" class="hero section dark-background">
+  <img src="assets/img/hero-bg.jpg" alt="" data-aos="fade-in">
+  <div class="container text-center" data-aos="fade-up" data-aos-delay="100">
+    <div class="row justify-content-center">
+      <div class="col-lg-6">
+        <h2>Inicia Sesión o Registrate</h2>
+        <p>Crea o accede a tu cuenta para empezar a generar diagramas UML.</p>
+        <form action="../cgi-bin/register.pl" method="post" class="php-auth-form">
+          <div class="row gy-3">
+            <div class="col-12">
+              <input type="text" name="username" class="form-control" placeholder="Nombre de Usuario" required>
+            </div>
+            <div class="col-12">
+              <input type="password" name="password" class="form-control" placeholder="Contraseña" required>
+            </div>
+            <div class="col-12">
+              <button type="submit" class="btn btn-primary w-100">Continuar</button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</section>
+```
+- Sección Hero: Esta es la sección principal de la página donde se muestra el formulario de inicio de sesión o registro.
+  - Imagen de fondo: hero-bg.jpg que se carga con un efecto de entrada.
+  - Formulario: Un formulario HTML que envía los datos a un script CGI (register) usando el método POST.
+    - Campos de entrada para el nombre de usuario y contraseña.
+    - Botón de envío que permite continuar al siguiente paso después de completar el formulario.
+
+```html=74
+<script src="assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+<script src="assets/vendor/aos/aos.js"></script>
+<script src="assets/vendor/glightbox/js/glightbox.min.js"></script>
+<script src="assets/js/main.js"></script>
+<script>   
+  const loginForm = document.getElementById('login-form');
+  
+  loginForm.addEventListener('submit', function(event) {
+    event.preventDefault();
+    window.location.href = 'general.html';
+  });
+</script>
+```
+- Scripts: Estos scripts se encargan de la funcionalidad dinámica de la página.
+  - Bootstrap y otros plugins: Se cargan para habilitar efectos visuales y funciones interactivas como los modales, desplazamiento suave, etc.
+  - Evento submit: Un script adicional que redirige al usuario a general.html cuando el formulario es enviado, aunque parece que este script no está asociado a ningún formulario en el HTML mostrado.
+
 # 
 
 ### general 
-```html
-<body>
-    <form class="formulario" action="/cgi-bin/buscarDatosUniversidades.pl" method="get">
+
+```html=178
+<div id="myModal" class="modal">
+    <div class="modal-content">
+        <p>Ingresar agregación y composición de la siguiente manera:</p>
+        <p>
+            @Agregacion: (nombre de la clase) (cantidad) tiene (nombre de la clase) (cantidad)<br>
+            @Composicion: (nombre de la clase) (cantidad) tiene (nombre de la clase) (cantidad)<br>
+            Ejemplo:<br>
+            @Agregacion: Concesionario 1 tiene Agregacion 0...<br>
+            @Composicion: Concesionario 1...n* tiene Composicion 2..5
+        </p>
+    </div>
+</div>
 ```
-- Esta parte representa el inicio del cuerpo de la página y un formulario que permite al usuario enviar datos. El formulario tiene la clase `formulario` y envía los datos al script CGI `buscarDatosUniversidades.pl` en el servidor. El atributo `method="get"` indica que los datos se enviarán como parámetros en la URL, lo que es útil para solicitudes donde los datos no son sensibles y pueden ser visibles en la barra de direcciones.
+- La sección del código relacionada con la ventana modal proporciona información sobre cómo ingresar detalles de agregación y composición en el código Java.
+
+```perl=248
+loadReposButton.addEventListener('click', () => {
+    const username = usernameInput.value;
+    if (!username) {
+        alert('Por favor ingresa tu nombre de usuario de GitHub');
+        return;
+    }
+
+    fetch(`${apiUrl}/users/${username}/repos?type=all`)
+        .then(response => response.json())
+        .then(data => {
+            repoSelect.innerHTML = '<option value="">Selecciona un repositorio</option>';
+            if (data.length > 0) {
+                data.forEach(repo => {
+                    const option = document.createElement('option');
+                    option.value = repo.name;
+                    option.textContent = repo.name;
+                    repoSelect.appendChild(option);
+                });
+                repoSelect.disabled = false;
+            } else {
+                alert('No se encontraron repositorios para este usuario.');
+            }
+        })
+        .catch(error => alert('Error al cargar repositorios: ' + error));
+});
+```
+- El JavaScript maneja la carga de repositorios de GitHub usando la API de GitHub. También permite que el usuario seleccione archivos .java de un repositorio específico.
+
+```perl=306
+ loadFileButton.addEventListener('click', () => {
+            const fileUrl = fileSelect.value;
+            if (!fileUrl) {
+                alert('Por favor selecciona un archivo para cargar.');
+                return;
+            }
+
+            if (!selectedInput) {
+                alert('Por favor selecciona un campo de texto donde cargar el archivo.');
+                return;
+            }
+
+            fetch(fileUrl)
+                .then(response => response.text())
+                .then(content => {
+                    selectedInput.value += '\n' + content;
+                })
+                .catch(error => alert('Error al cargar el contenido del archivo: ' + error));
+});
+```
+- Después de que el usuario selecciona un archivo .java, el contenido del archivo se carga en el área de texto correspondiente del formulario.
+
+```perl=327
+const chatIcon = document.getElementById('chat-icon');
+const chatWindow = document.getElementById('chat-window');
+
+chatIcon.addEventListener('click', () => {
+    chatWindow.style.display = chatWindow.style.display === 'flex' ? 'none' : 'flex';
+});
+
+formulario.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const mensajeUsuario = entrada.value.trim();
+    if (mensajeUsuario) {
+        agregarMensaje('usuario', mensajeUsuario);
+        entrada.value = '';
+        mostrarNotificacion();
+    }
+});
+
+function agregarMensaje(clase, texto) {
+    const mensaje = document.createElement('div');
+    mensaje.className = `mensaje ${clase}`;
+    mensaje.innerHTML = `<p>${texto}</p>`;
+    mensajesDiv.appendChild(mensaje);
+    mensajesDiv.scrollTop = mensajesDiv.scrollHeight; 
+}
+```
+- Esta sección implementa un icono flotante que permite abrir y cerrar una ventana de chat para enviar mensajes al usuario. El chat se maneja con un formulario simple.
+
+
+```perl=395
+document.addEventListener('DOMContentLoaded', () => {
+    const form = document.querySelector('.php-code-form');
+    const umlImageContainer = document.getElementById('imagen-uml');
+
+    form.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const formData = new FormData(form);
+
+        try {
+            // Enviar los datos al script Perl
+            const response = await fetch('/cgi-bin/generate_uml.pl', {
+                method: 'POST',
+                body: formData            });
+
+            if (response.ok) {
+                form.reset();
+                const svgResponse = await fetch("../puml_files/archivo.svg");
+
+                if (svgResponse.ok) {
+                    const svgText = await svgResponse.text();
+                    umlImageContainer.innerHTML = svgText;
+                } else {
+                    console.error('Error al obtener el archivo SVG:', svgResponse.statusText);
+                }
+            } else {
+                console.error('Error en la solicitud:', response.statusText);
+            }
+        } catch (error) {
+            console.error('Error al enviar los datos:', error);
+        }
+    });
+});
+```
+- El formulario envía los datos al script Perl /cgi-bin/generate_uml.pl, que procesa los datos y genera el diagrama UML. La imagen resultante (en formato SVG) se inserta en el contenedor correspondiente.
+
+
 
 
 #
 
 ## BASE DE DATOS
 ### init_db
-```sql
-FROM bitnami/minideb
-ENV DEBIAN_FRONTEND="noninteractive"
+```sql=6
+CREATE TABLE IF NOT EXISTS users (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(255) NOT NULL UNIQUE,
+    password VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
 ```
-- Usa una imagen ligera basada en Debian.
+La tabla users está diseñada para almacenar información de los usuarios registrados en el sistema. Esta tabla tiene los siguientes campos:
 
+- id: Un identificador único para cada usuario. Es un entero que se auto-incrementa y se utiliza como clave primaria.
+- username: El nombre de usuario del usuario, de tipo VARCHAR(255), que debe ser único.
+- password: La contraseña del usuario, también de tipo VARCHAR(255).
+- created_at: La fecha y hora en que se creó el usuario. Este campo tiene un valor predeterminado de la hora actual, lo que significa que se llena automáticamente al crear el registro.
+
+```sql=6
+CREATE TABLE IF NOT EXISTS files (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    filename VARCHAR(255) NOT NULL,
+    content TEXT NOT NULL,
+    user_id INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id)
+);
+```
+La tabla files está diseñada para almacenar los archivos PUML cargados por los usuarios. Sus campos son:
+
+- id: Un identificador único para cada archivo, de tipo entero que se auto-incrementa y es clave primaria.
+- filename: El nombre del archivo PUML, de tipo VARCHAR(255).
+- content: El contenido del archivo PUML, almacenado como texto (TEXT), lo que permite guardar archivos grandes.
+- user_id: Este campo relaciona cada archivo con un usuario, utilizando la clave foránea que hace referencia al id de la tabla users.
+- created_at: La fecha y hora en que el archivo fue cargado. También tiene un valor predeterminado de la hora actual.
+
+
+Además, se establece una relación de clave foránea entre el campo user_id de la tabla files y el campo id de la tabla users, lo que permite asociar cada archivo con el usuario que lo subió.
+
+### Diagrama de la base de datos usada
+![image](https://hackmd.io/_uploads/Hyl6bzAE1e.png)
 
 
 # 
 ## EXPLICACIÓN DEL USO DE AJAX PARA CRUD
 ### Create
--
+- La operación "Crear" se utiliza para insertar nuevos registros en la base de datos. En este caso, se envían los datos del nombre del archivo desde un formulario a través de AJAX.
+```javascript=242
+$('#add-form').on('submit', function(e) {
+    e.preventDefault();
+    const filename = $('#filename').val();
+    $.post('', { action: 'insert', filename: filename }, function(response) {
+        alert(response.message);
+        fetchRecords();
+        $('#filename').val('');
+    }, 'json');
+});
+```
+- En este fragmento, el formulario se envía mediante AJAX para crear un nuevo archivo en la base de datos.
+- Después de la inserción, la lista de archivos se recarga automáticamente con fetchRecords().
+
 ### Read
--
+- La operación "Leer" se utiliza para obtener registros desde la base de datos. Se realiza una solicitud POST con la acción fetch para obtener los datos y mostrarlos en la interfaz de usuario.
+
+```javascript=217
+function fetchRecords() {
+    $.post('', { action: 'fetch' }, function(response) {
+        if (response.status === 'success') {
+            let rows = '';
+            response.data.forEach(function(record) {
+                rows += `
+                    <tr>
+                        <td>${record.filename}</td>
+                        <td>${record.created_at}</td>
+                        <td>
+                            <button class="edit-btn" data-id="${record.id}" data-content="${record.content}">
+                                Editar
+                            </button>
+                            <button class="delete-btn" data-id="${record.id}">
+                                Eliminar
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+            $('#files-table tbody').html(rows);
+        }
+    }, 'json');
+}
+```
+- La función fetchRecords() envía una solicitud para obtener todos los registros de la base de datos.
+- Luego, la tabla HTML se actualiza con los datos obtenidos.
+
 ### Update
--
+- La operación "Actualizar" permite modificar registros existentes. En este caso, se actualiza el contenido de un archivo, enviando los nuevos datos mediante una solicitud POST con la acción update.
+
+```javascript=259
+$('#save-btn').on('click', function() {
+    const id = $('#edit-modal').data('id');
+    const content = $('#edit-content').val();
+    $.post('', { action: 'update', id: id, content: content }, function(response) {
+        alert(response.message);
+        $('#edit-modal').fadeOut();
+        fetchRecords();
+    }, 'json');
+});
+```
+- Al guardar, los datos del archivo se actualizan en la base de datos y la lista se recarga para reflejar los cambios.
+
 ### Delete
--
+- La operación "Eliminar" permite borrar registros. Se envía una solicitud POST al servidor con la acción delete para eliminar el archivo.
+
+```javascript=273
+$(document).on('click', '.delete-btn', function() {
+    const id = $(this).data('id');
+    if (confirm('¿Seguro que deseas eliminar este archivo?')) {
+        $.post('', { action: 'delete', id: id }, function(response) {
+            alert(response.message);
+            fetchRecords();
+        }, 'json');
+    }
+});
+```
+- La confirmación de eliminación se realiza mediante confirm(), y si el usuario acepta, se envía la solicitud para eliminar el archivo y se recarga la lista de archivos.
+
 
 # 
 ## EXPLICACIÓN DEL USO DE VARIABLES DE SESIÓN
 ### Explicación
--
-
-
+- El uso de variables de sesión en el registo de usuario facilita la autenticación y la personalización del flujo de trabajo de la aplicación, permitiendo que los usuarios puedan interactuar con la aplicación de manera eficiente y segura. Al almacenar información crítica del usuario en la sesión, se asegura que el sistema pueda gestionar correctamente los permisos y el acceso a los datos del usuario mientras se mantiene la seguridad.
 
 #
 ## DOCKERFILE
@@ -404,110 +881,158 @@ ENV DEBIAN_FRONTEND="noninteractive"
 - Configura el entorno para evitar prompts interactivos durante la instalación.
 ```dockerfile
 RUN apt-get update && \
-    apt-get install -y apache2 perl libcgi-pm-perl libtext-csv-perl openssh-server && \
+    apt-get install -y --no-install-recommends \
+        apache2 \
+        perl \
+        libcgi-pm-perl \
+        mariadb-server \
+        mariadb-client \
+        libdbd-mysql-perl \
+        libjson-perl \
+        libcgi-session-perl \
+        default-jre-headless \
+        graphviz && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 ```
-- Instala:
-  - Apache: servidor web para servir páginas HTML.
-  - Perl: lenguaje para scripts CGI.
-  - Bibliotecas para CSV y CGI.
-  - Servidor SSH para acceso remoto al contenedor.
-- Limpia cachés de instalación para reducir el tamaño de la imagen.
+- Actualiza el índice de paquetes (apt-get update) e instala:
+  - Apache2: Servidor web.
+  - Perl y módulos (libcgi-pm-perl, libdbd-mysql-perl, libjson-perl, libcgi-session-perl): Soporte para scripts CGI y manejo de sesiones, JSON, y conexiones a bases de datos.
+  - MariaDB Server y Client: Base de datos y cliente.
+  - Java Runtime Environment (JRE): Necesario para PlantUML.
+  - Graphviz: Generador de gráficos para PlantUML.
+- apt-get clean & rm: Limpia archivos innecesarios para reducir el tamaño de la imagen.
 ```dockerfile
 RUN a2enmod cgid
+
+RUN mkdir -p /usr/lib/cgi-bin /usr/lib/puml_files /var/www/html /var/lib/mysql /run/mysqld /tmp/sessions && \
+    chown -R mysql:mysql /var/lib/mysql /run/mysqld && \
+    chmod -R 755 /usr/lib/cgi-bin && \
+    chmod -R 755 /var/www/html && \
+    chown -R www-data:www-data /usr/lib/puml_files && \
+    chmod -R 755 /usr/lib/puml_files && \
+    chmod -R 777 /tmp/sessions
 ```
-- Activa el módulo CGI en Apache, necesario para ejecutar scripts Perl como aplicaciones web.
+- a2enmod cgid: Habilita el módulo CGI de Apache para ejecutar scripts CGI.
+- mkdir: Crea directorios necesarios:
+  - /usr/lib/cgi-bin: Para los scripts CGI.
+  - /usr/lib/puml_files: Para PlantUML.
+  - /var/www/html: Para archivos web.
+  - /var/lib/mysql, /run/mysqld: Para MariaDB.
+  - /tmp/sessions: Para sesiones temporales.
+- chmod y chown: Ajusta permisos y propietarios para garantizar que los servicios funcionen correctamente.
 ```dockerfile
-RUN mkdir /var/run/sshd && \
-    echo 'root:password' | chpasswd && \
-    sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config && \
-    sed -i 's/UsePAM yes/UsePAM no/' /etc/ssh/sshd_config
+RUN ln -s /usr/lib/puml_files /var/www/html/puml_files
 ```
-- Crea un directorio para SSH.
-- Establece una contraseña para el usuario `root`.
-- Configura SSH para permitir inicio de sesión como `root`.
-- Desactiva el uso de PAM (módulo de autenticación pluggable) para simplificar el acceso.
+- Crea un enlace simbólico desde /usr/lib/puml_files hacia /var/www/html/puml_files para exponer los archivos de PlantUML en el servidor web.
 ```dockerfile
-RUN mkdir -p /usr/lib/cgi-bin /var/www/html
+RUN mariadb-install-db --user=mysql --datadir=/var/lib/mysql && \
+    chown -R mysql:mysql /var/lib/mysql
 ```
-- Crea directorios necesarios:
-  - `/usr/lib/cgi-bin`: para scripts CGI.
-  - `/var/www/html`: para los archivos HTML del servidor web.
+- mariadb-install-db: Inicializa la base de datos MariaDB.
+- chown: Ajusta los permisos de MariaDB al usuario mysql.
 ```dockerfile
 COPY ./cgi-bin/ /usr/lib/cgi-bin/
 COPY ./html/ /var/www/html/
+COPY ./puml_files/ /usr/lib/puml_files/
+COPY ./plantuml.jar /usr/lib/puml_files/plantuml.jar
+COPY ./init_db.sql /docker-entrypoint-initdb.d/
 ```
-- Copia los scripts Perl y archivos HTML desde tu sistema al contenedor.
+- Copia los archivos necesarios al contenedor:
+  - cgi-bin/: Scripts CGI.
+  - html/: Archivos HTML del servidor web.
+  - puml_files/ y plantuml.jar: Archivos relacionados con PlantUML.
+  - init_db.sql: Script SQL para inicializar la base de datos.
 ```dockerfile
+RUN chmod 644 /docker-entrypoint-initdb.d/init_db.sql && \
+    chown mysql:mysql /docker-entrypoint-initdb.d/init_db.sql
+
 RUN chmod +x /usr/lib/cgi-bin/*.pl && \
-    chmod -R 755 /usr/lib/cgi-bin/* && \
-    chmod -R 755 /var/www/html
+    chmod +x /usr/lib/puml_files/plantuml.jar
 ```
-- Da permisos de ejecución a los scripts CGI y permisos de lectura/escritura adecuados a los directorios.
+- chmod:
+  - Asegura que el script de inicialización SQL tenga permisos de lectura.
+  - Hace ejecutables los scripts CGI (*.pl) y PlantUML (plantuml.jar).
 ```dockerfile
-EXPOSE 80 22
+CMD ["/bin/bash", "-c", "mysqld --datadir=/var/lib/mysql --user=mysql --skip-grant-tables & sleep 5 && mysql < /docker-entrypoint-initdb.d/init_db.sql && apachectl -D FOREGROUND"]
 ```
-- 80: para el servidor web (HTTP).
-- 22: para conexiones SSH.
+- Comando principal que:
+  - Inicia MariaDB en modo sin autenticación (--skip-grant-tables).
+  - Ejecuta el script SQL de inicialización (init_db.sql).
+  - Inicia Apache en primer plano (apachectl -D FOREGROUND).
 ```dockerfile
-CMD ["bash", "-c", "service ssh start && apachectl -D FOREGROUND"]
+EXPOSE 80
 ```
-- Inicia ambos servicios:
-  - SSH: para acceso remoto.
-  - Apache: para servir páginas y ejecutar scripts CGI.
+- ![WhatsApp Image 2024-12-16 at 3.52.49 PM](https://hackmd.io/_uploads/BykP7f04yx.jpg)
+Expone el puerto 80 para permitir que el servidor web sea accesible.
 
 ### Comandos
 - Copiar este comando para crear la imagen.
 ```sh
-docker build -t miweb .
+docker build -t img .
 ```
 - Copiar este comando para crear el contenerdor.
 ```sh
-docker run -d --name myweb1 -p 8083:80 -p 22:22 miweb
+docker run -d --name pweb1 -p 8089:80 img
+```
+- Acceder a base de datos
+```sh
+Docker exec -it pweb1 bash
+
+mysql -u root -p
+use puml_history;
+select * from users;
+select * from files;
 ```
 #  
 ## COMMITS MÁS IMPORTANTES
 Antes de iniciar el proyecto habíamos decidido que trabajaríamos con ramas, por eso algunos commits aparecerán con nombres de rama diferentes a `main`.
-#### Commit "HTML y CSS para la búsqueda de universidades" 
+#### Commit "HTML, CSS, AJAX en el index y la ventana general de nuestra web" 
 ![Commit5]
-- En este commit estamos cambiando el fondo de nuestra pagina, ya que inicialmente tenia un fondo de un color.
-#### Commit "Búsqueda en el archivo CVS y lógica inicial para la tabla y google maps"
-![Commit4]
-- Este commit fue de los primeros, pero de los más importantes, ya que aquí se realizó la lógica para leer el archivo cvs como se puede ver en la explicación del código y además se introdujo el condicional para cuando aparezca un "iframe" de google maps o la tabla con las universidades.
-#### Commit "Agregando Ubicacion a la tabla"
-![Commit3]
-- Este commit agregó el campo de dirección para las universidades encontradas en caso fueran varias, este campo nos mandaría a la ubicación de la universidad en Google Maps.
-#### Commit creación del caso 'Universidad no encontrada'
+- En estos commits añadimos los campos de texto para que el usuario pueda ingresar sus codigos y ademas de poder conectar el form con el perl que genera el archivo.pl.
+#### Commit "Logica generacion de diagrama UML"
+![image](https://hackmd.io/_uploads/SkbaQGANyl.png)
+- Este commit fue una actualizacion que servirìa a futuro en la logica de la generacion del diagrama UML. 
+#### Commit "Creacion del archivo generate_uml.pl"
 ![Commit1]
-- Este commit agregó el diseño del último caso de las respuestas que da nuestro programa. Sin cerrar el formulario, ahora se mostraría un mensaje con un diseño gozu.
-#### Commit de la union de todas las partes 
-![Commit2]
-- Este commit une todas las partes para que la web funcione correctamente.
+- Este commit se encargará de generar el diagrama código puml para que después pueda generarse la imágen .svg  y se pueda mostrar en el diagrama al usuario de la página.
+
+#### Commit del historial y crud completo
+![image](https://hackmd.io/_uploads/SkYiMf041e.png)
+- Con este commit habíamos completado ya la parte de CRUD con ajax, permitiendo actualizar, eliminar, crear archivos dentro de la base de datos.
+
+#### Commit de logica para generar el diagrama.svg
+![image](https://hackmd.io/_uploads/Syg8EzRN1e.png)
+- Este commit sirvio para generar la logica para la generacion de archivo.svg en la cual estara el diagrama UML.
 
 #
 ## EXPLICACIÓN DE CAPTURAS
 
-![Prueba1]
-- Esta es la página principal de nuestra página(index.html), en donde se ingresan los datos en los campos requeridos para poder realizar la búsqueda de universidades.
+![image](https://hackmd.io/_uploads/HyAqSzCVJx.png)
 
-![Prueba2]
-- En este caso se ingresa en el campo de "búsqueda de nombre de la universidad" el nombre de "pablo" para poder buscar todas las universidades que incluyan ese nombre.
+- Esta es la parte donde el usuario debe registrarse o iniciar sesion con su cuenta.
 
-![Prueba3]
-- Como se puede observar al buscar universidades que incluyan el nombre de "pablo" nos muestra a todas las universidades con este nombre, en este caso son 2 y podemos observar sus respectivos datos: código, nombre, tipo, estado, inicio, fin, periodo, departamento, provincia, distrito, dirección.
+![image](https://hackmd.io/_uploads/Skg2SfA41l.png)
 
-![Prueba4]
-- Una vez realizada la búsqueda, se puede volver a ingresar otros datos para la búsqueda de otras universidades.
+- Esta es la ventana principal de nuestra web donde el usuario puede empezar a generar diagramas UML.
 
-![Prueba5]
-- En este caso se hace la busqueda de la Universidad Nacional de San Agustín, como podemos observar nos muestra los respectivos datos y la ubicación de Google Maps en un iframe.
+![image](https://hackmd.io/_uploads/H1q2HzANJg.png)
 
-![Prueba6]
-- En este caso se busca la "universidad Sideral" la cual no existe.
+- En esta parte el usuario puede conectar su cuenta de GitHub con la pagina para poder obtener archivos que son de lenguaje java, los cuales se insertaran en los campos  de texto que estan abajo.
 
-![Prueba7]
-- Como podemos observar se muestra una imagen con el mensaje de "universidad no encontrada" y que probemos con otros datos.
+![image](https://hackmd.io/_uploads/B1carMRVyg.png)
+
+- En esta parte se observa los campos de texto donde el usuario puede ingresar de manera manual sus codigos java o insertarlos de su GitHub.
+
+![image](https://hackmd.io/_uploads/S190BG0Eyx.png)
+
+- Al dar en el boton de generar UML, me genera el diagrama UML.
+
+![image](https://hackmd.io/_uploads/SJwVLzRN1e.png)
+
+
+- Al dar en el boton de guardar, el usuario debe de ingresar el nombre del archivo con el cual se guardara en el historial.
+
 
 
 #
@@ -571,7 +1096,7 @@ Mejorar la sección de comentarios para permitir una interacción más dinámica
 |Pregunta|Se responde con completitud a la pregunta formulada en la tarea. (El profesor puede preguntar para refrendar calificación). Si no se le entrego pregunta, usted recopile información relevante para el laboratorio desde diferentes medios, referenciándola correctamente.|   X  |     |     |
 |Ortografía|El documento no muestra errores ortográficos.|   X  |     |     |
 |Madurez|El Informe muestra de manera general una evolución de la madurez del código fuente, explicaciones puntuales pero precisas y un acabado impecable. (El profesor puede preguntar para refrendar calificación).|     |   X  |     |
-|     |CALIFICACION|  16   |  2   |     |
+|     |CALIFICACION|  18   |  2   |     |
 #
 ## REFERENCIAS
 
@@ -650,11 +1175,11 @@ https://www.youtube.com/watch?v=74_7LrRe5DI&t=8s
 [Prueba6]:https://hackmd.io/_uploads/HkQ3SE_M1x.jpg
 [Prueba7]:https://hackmd.io/_uploads/HkpJ8VOfJl.jpg
 
-[Commit1]:https://hackmd.io/_uploads/Sks-94uzJe.jpg
-[Commit2]:https://hackmd.io/_uploads/S1Ct9VuGkl.jpg
+[Commit1]:https://hackmd.io/_uploads/r13Wbz0Nkg.jpg
+[Commit2]:
 [Commit3]:https://hackmd.io/_uploads/ryAoc4_M1x.jpg
 [Commit4]:https://hackmd.io/_uploads/SJId2EdfJx.jpg
-[Commit5]:https://hackmd.io/_uploads/rk5I0Ndfye.jpg
+[Commit5]:https://hackmd.io/_uploads/HJj2-fA4yg.jpg
 
 
 [![Debian][Debian]][debian-site]
