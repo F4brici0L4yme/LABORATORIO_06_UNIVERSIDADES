@@ -77,14 +77,16 @@ sub delete_record {
 }
 
 # Subrutina para actualizar un registro
+# Subrutina para actualizar un registro
 sub update_record {
     print $cgi->header('application/json');
     my $id      = $cgi->param('id');
+    my $filename = $cgi->param('filename');
     my $content = $cgi->param('content');
 
     eval {
-        my $sth = $dbh->prepare("UPDATE files SET content = ? WHERE id = ?");
-        $sth->execute($content, $id);
+        my $sth = $dbh->prepare("UPDATE files SET filename = ?, content = ? WHERE id = ?");
+        $sth->execute($filename, $content, $id);
         if ($sth->rows > 0) {
             print encode_json({ status => 'success', message => 'Archivo actualizado correctamente' });
         } else {
@@ -114,7 +116,7 @@ sub print_html {
             padding: 0;
         }
 
-        h1 {
+        h1, a {
             text-align: center;
             margin: 20px 0;
             font-size: 2rem;
@@ -195,6 +197,7 @@ sub print_html {
 </head>
 <body>
     <h1>Historial de Archivos PUML</h1>
+    <a href="/general.html">Volver al inicio</a>
     <table id="files-table">
         <thead>
             <tr>
@@ -214,73 +217,75 @@ sub print_html {
     </div>
 
     <script>
-        function fetchRecords() {
-            $.post('', { action: 'fetch' }, function(response) {
-                if (response.status === 'success') {
-                    let rows = '';
-                    response.data.forEach(function(record) {
-                        rows += `
-                            <tr>
-                                <td>${record.filename}</td>
-                                <td>${record.created_at}</td>
-                                <td>
-                                    <button class="edit-btn" data-id="${record.id}" data-content="${record.content}">
-                                        Editar
-                                    </button>
-                                    <button class="delete-btn" data-id="${record.id}">
-                                        Eliminar
-                                    </button>
-                                </td>
-                            </tr>
-                        `;
-                    });
-                    $('#files-table tbody').html(rows);
-                }
+    // Obtener registros y mostrarlos
+    function fetchRecords() {
+        $.post('', { action: 'fetch' }, function(response) {
+            if (response.status === 'success') {
+                let rows = '';
+                response.data.forEach(function(record) {
+                    rows += `
+                        <tr>
+                            <td>${record.filename}</td>
+                            <td>${record.created_at}</td>
+                            <td>
+                                <button class="edit-btn" data-id="${record.id}" data-filename="${record.filename}" data-content="${record.content}">
+                                    Editar
+                                </button>
+                                <button class="delete-btn" data-id="${record.id}">
+                                    Eliminar
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                });
+                $('#files-table tbody').html(rows);
+            }
+        }, 'json');
+    }
+
+    // Evento para editar el archivo
+    $(document).on('click', '.edit-btn', function() {
+        const id = $(this).data('id');
+        const filename = $(this).data('filename');
+        const content = $(this).data('content');
+        
+        // Mostrar el modal de edición con el nombre del archivo y contenido
+        $('#edit-modal').data('id', id).fadeIn();
+        $('#edit-filename').val(filename);
+        $('#edit-content').val(content);
+    });
+
+    // Guardar cambios (nombre y contenido)
+    $('#save-btn').on('click', function() {
+        const id = $('#edit-modal').data('id');
+        const filename = $('#edit-filename').val();
+        const content = $('#edit-content').val();
+        
+        // Enviar la actualización al servidor
+        $.post('', { action: 'update', id: id, filename: filename, content: content }, function(response) {
+            alert(response.message);
+            $('#edit-modal').fadeOut();
+            fetchRecords();
+        }, 'json');
+    });
+
+    // Cancelar la edición
+    $('#cancel-btn').on('click', function() {
+        $('#edit-modal').fadeOut();
+    });
+
+    // Eliminar archivo
+    $(document).on('click', '.delete-btn', function() {
+        const id = $(this).data('id');
+        if (confirm('¿Seguro que deseas eliminar este archivo?')) {
+            $.post('', { action: 'delete', id: id }, function(response) {
+                alert(response.message);
+                fetchRecords();
             }, 'json');
         }
+    });
 
-        $('#add-form').on('submit', function(e) {
-            e.preventDefault();
-            const filename = $('#filename').val();
-            $.post('', { action: 'insert', filename: filename }, function(response) {
-                alert(response.message);
-                fetchRecords();
-                $('#filename').val('');
-            }, 'json');
-        });
-
-        $(document).on('click', '.edit-btn', function() {
-            const id = $(this).data('id');
-            const content = $(this).data('content');
-            $('#edit-modal').data('id', id).fadeIn();
-            $('#edit-content').val(content);
-        });
-
-        $('#save-btn').on('click', function() {
-            const id = $('#edit-modal').data('id');
-            const content = $('#edit-content').val();
-            $.post('', { action: 'update', id: id, content: content }, function(response) {
-                alert(response.message);
-                $('#edit-modal').fadeOut();
-                fetchRecords();
-            }, 'json');
-        });
-
-        $('#cancel-btn').on('click', function() {
-            $('#edit-modal').fadeOut();
-        });
-
-        $(document).on('click', '.delete-btn', function() {
-            const id = $(this).data('id');
-            if (confirm('¿Seguro que deseas eliminar este archivo?')) {
-                $.post('', { action: 'delete', id: id }, function(response) {
-                    alert(response.message);
-                    fetchRecords();
-                }, 'json');
-            }
-        });
-
-        $(document).ready(fetchRecords);
+    $(document).ready(fetchRecords);
     </script>
 </body>
 </html>

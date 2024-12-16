@@ -139,6 +139,9 @@
                         <div class="text-center mt-3">
                             <button type="submit" id="generate-uml-btn" class="btn-get-started">Generar UML</button>
                         </div>
+                        <div class="text-center mt-3">
+                            <button type="button" id="save-uml-btn" class="btn-get-started">Guardar archivo</button>
+                        </div>
                     </form>
                     <!-- Contenedor para la imagen SVG -->
                     <div id="umlImageContainer" class="mt-4"></div>
@@ -637,6 +640,42 @@
     });
 });
 
+$(document).ready(function() {
+    $('#save-uml-btn').click(function() {
+        // Desactivar el botón para evitar clics repetidos mientras se procesa
+        $('#save-uml-btn').prop('disabled', true);
+
+        // Pedir al usuario que ingrese un nombre para el archivo
+        var filename = prompt("Ingresa el nombre del archivo para guardar:");
+
+        // Verificar si el usuario ingresó un nombre
+        if (filename) {
+            $.ajax({
+                url: '../cgi-bin/save_puml.pl', // Ruta al archivo save.pl
+                type: 'POST',
+                data: { filename: filename }, // Enviar el nombre del archivo
+                success: function(response) {
+                    if (response.status === "success") {
+                        $('#message').html('<span class="success">' + response.message + '</span>');
+                    } else {
+                        $('#message').html('<span class="error">' + response.message + '</span>');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    $('#message').html('<span class="error">Hubo un error al guardar el archivo: ' + error + '</span>');
+                },
+                complete: function() {
+                    // Reactivar el botón después de completar la petición
+                    $('#save-uml-btn').prop('disabled', false);
+                }
+            });
+        } else {
+            // Si no se ingresó un nombre de archivo
+            $('#save-uml-btn').prop('disabled', false);
+            alert("El nombre del archivo es obligatorio.");
+        }
+    });
+});
         /* modal */
         let modalShown = false;
 
