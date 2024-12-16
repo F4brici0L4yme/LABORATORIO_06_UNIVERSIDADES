@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>Generador de Diagramas UML</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
+    <link href="assets/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+    <link href="assets/vendor/bootstrap-icons/bootstrap-icons.css" rel="stylesheet">
+    <link href="assets/vendor/aos/aos.css" rel="stylesheet">
+    <link href="assets/vendor/glightbox/css/glightbox.min.css" rel="stylesheet">
+    <link href="assets/vendor/swiper/swiper-bundle.min.css" rel="stylesheet">
+    <link href="assets/css/main.css" rel="stylesheet">
+</head>
+
+<body class="index-page">
+
+    <header id="header" class="header d-flex align-items-center fixed-top">
+        <div class="container-fluid container-xl position-relative d-flex align-items-center justify-content-between">
+
+        <a href="index.html" class="logo d-flex align-items-center">
+
+            <h1 class="sitename">Diagramas UML</h1>
+        </a>
+
+        <nav id="navmenu" class="navmenu">
+            <ul>
+            <li><a href="#hero" class="active">Inicio</a></li>
+            <li><a href="#convertir">Convertir</a></li>
+            <li><a href="../cgi-bin/fetch_puml_history.pl">Historial</a></li>
+            <li><a href="../cgi-bin/logout.pl">Salir</a></li>
+            </ul>
+            <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
+        </nav>
+
+        </div>
+    </header>
+
+    <main class="main">
+
+    <!-- Hero Section -->
+    <section id="hero" class="hero section dark-background">
+
+        <img src="assets/img/hero-bg.jpg" alt="" data-aos="fade-in">
+        <div class="container text-center" data-aos="fade-up" data-aos-delay="100">
+            <div class="row justify-content-center">
+                <div class="col-lg-8">
+                <h2>Bienvenido a nuestra pagina Web</h2>
+                <p>Empieza a generar diagramas UML</p>
+                <a href="#convertir" class="btn-get-started">Empezar</a>
+                </div>
+            </div>
+        </div>
+    </section><!-- /Hero Section -->
+
+
+
+        <!-- Contact Section -->
+    <section id="convertir" class="contact section">
+
+        <!-- Section Title -->
+        <div class="container section-title" data-aos="fade-up">
+            <h2>Convetir</h2>
+            <p>Proporciona tu código o archivo Java para convertirlo a diagramas UML.</p>
+        </div><!-- End Section Title -->
+        
+
+        <!-- Formulario para ingresar el nombre de usuario y seleccionar repositorio -->
+        <div class="form-container">
+            <div class="form-group">
+                <h3>Obtener archivos de GitHub</h3>
+                <label for="github-username">Nombre de usuario de GitHub:</label>
+                <input type="text" id="github-username" class="btn-get-started" placeholder="Ingresa tu nombre de usuario de GitHub" required>
+            </div>
+        
+            <div class="form-group">
+                <label for="repo-select">Selecciona un repositorio:</label>
+                <select id="repo-select" class="btn-get-started" disabled>
+                    <option value="">Selecciona un repositorio</option>
+                </select>
+            </div>
+        
+            <div class="form-group">
+                <label for="file-select">Selecciona un archivo .java:</label>
+                <select id="file-select" class="btn-get-started" disabled>
+                    <option value="">Selecciona un archivo</option>
+                </select>
+            </div>
+        
+            <div class="button-group">
+                <button id="load-repos" class="btn-get-git">Cargar Repositorios</button>
+                <button id="load-file" class="btn-get-git" disabled>Cargar archivo</button>
+            </div>
+        </div>
+        
+        <div id="file-content" style="margin-top: 20px; font-family: monospace; white-space: pre-wrap;"></div>
+        <br><br><br>
+        <div class="container" data-aos="fade-up" data-aos-delay="100">
+            <div class="row gy-4">
+                <div class="col-lg-6">
+                    <form action="/cgi-bin/generate_uml.pl" method="post" class="php-code-form" data-aos="fade-up" data-aos-delay="200">
+                        <div class="form-group">
+                            <div class="collapsible" onclick="toggleCollapse('javaCodeMain')">
+                                <h3>Main:</h3>
+                            </div>
+                            <textarea id="javaCodeMain" name="java_code_main" class="form-control code-input collapsible-content" rows="6" placeholder="Ingresa tu código aquí..." style="display: none;"></textarea>
+                        </div>
+                        <div class="form-group mt-3">
+                            <div class="collapsible" onclick="toggleCollapse('javaCodeInheritance')">
+                                <h3>Herencia:</h3>
+                            </div>
+                            <textarea id="javaCodeInheritance" name="java_code_inheritance" class="form-control code-input collapsible-content" rows="6" placeholder="Ingresa tu código aquí..." style="display: none;"></textarea>
+                        </div>
+                        <div class="form-group mt-3">
+                            <div class="collapsible" onclick="toggleCollapse('javaCodeInterface')">
+                                <h3>Interfaces:</h3>
+                            </div>
+                            <textarea id="javaCodeInterface" name="java_code_interface" class="form-control code-input collapsible-content" rows="6" placeholder="Ingresa tu código aquí..." style="display: none;"></textarea>
+                        </div>
+                        <div class="form-group mt-3">
+                            <div class="collapsible" onclick="toggleCollapse('javaCodeClass')">
+                                <h3>Clases:</h3>
+                            </div>
+                            <textarea id="javaCodeClass" name="java_code_class" class="form-control code-input collapsible-content" rows="6" placeholder="Ingresa tu código aquí..." style="display: none;"></textarea>
+                        </div>
+                        <div class="form-group mt-3">
+                            <div class="collapsible" onclick="toggleCollapse('javaCompAggre')">
+                                <h3>Agregacion y Composicion:</h3>
+                            </div>
+                            <textarea id="javaCompAggre" name="java_comp_aggre" class="form-control code-input collapsible-content" rows="6" placeholder="Ingresa tu código aquí..." style="display: none;"></textarea>
+                        </div>
+                        <div class="form-group mt-3">
+                            <div class="collapsible" onclick="toggleCollapse('javaDependencies')">
+                                <h3>Dependencias:</h3>
+                            </div>
+                            <textarea id="javaDependencies" name="java_dependencies" class="form-control code-input collapsible-content" rows="6" placeholder="Ingresa tu código aquí..." style="display: none;"></textarea>
+                        </div>
+                        <div class="text-center mt-3">
+                            <button type="submit" id="generate-uml-btn" class="btn-get-started">Generar UML</button>
+                        </div>
+                        <div class="text-center mt-3">
+                        <button type="button" id="save-uml-btn" class="btn-get-started">Guardar archivo</button>
+                    </div>
+                    </form>
+                    <!-- Contenedor para la imagen SVG -->
+                    <div id="umlImageContainer" class="mt-4"></div>
+
+                    <style>
+                        #umlImageContainer {
+                          margin-top: 300px; /* Aumenta la distancia entre el formulario y el SVG */
+                          text-align: center; /* Centra el contenido */
+                        }
+                      
+                        #umlImageContainer svg {
+                          width: 80%; /* Reduce el ancho del SVG al 80% */
+                          height: auto; /* Mantiene las proporciones originales */
+                          border: 1px solid #ccc; /* Opcional: Agrega un borde para mejor visualización */
+                          border-radius: 5px; /* Opcional: Bordes redondeados */
+                          padding: 10px; /* Espaciado interno opcional */
+                        }
+                    </style>
+
+                    <script>
+
+                        function toggleCollapse(id) {
+                            const textarea = document.getElementById(id);
+                            if (textarea.style.display === "none" || textarea.style.display === "") {
+                                textarea.style.display = "block";
+                            } else {
+                                textarea.style.display = "none";
+                            }
+                        }
+                    </script>
+                    
+                    <style>
+                        .collapsible {
+                            cursor: pointer;
+                            padding: 10px;
+                            background-color: #f1f1f1;
+                            border: 1px solid #ccc;
+                            border-radius: 5px;
+                            margin-bottom: 5px;
+                        }
+                        .collapsible h3 {
+                            margin: 0;
+                            font-size: 16px;
+                        }
+                        .collapsible-content {
+                            margin-top: 10px;
+                        }
+                    </style>
+                    
+                </div>
+                
+                <div class="col-lg-6 text-center" data-aos="fade-up" data-aos-delay="300" id="imagen-uml">
+                    <img src="https://d2slcw3kip6qmk.cloudfront.net/marketing/pages/chart/class-diagram-for-ATM-system-UML/Class-Diagram-ATM-system-750x660.png" alt="Imagen predeterminada" class="img-fluid rounded shadow">
+                </div>                           
+            </div>
+        </div>
+
+    </section><!-- /Contact Section -->
+    
+    <!-- Modal para Agregación y Composición -->
+     <div id="myModal" class="modal">
+        <div class="modal-content">
+            <p>Ingresar agregación y composición de la siguiente manera:</p>
+            <p>
+                @Agregacion: (nombre de la clase) (cantidad) tiene (nombre de la clase) (cantidad)<br>
+                @Composicion: (nombre de la clase) (cantidad) tiene (nombre de la clase) (cantidad)<br>
+                <br>
+                Ejemplo:<br>
+                @Agregacion: Concesionario 1 tiene Agregacion 0...<br>
+                @Composicion: Concesionario 1...n* tiene Composicion 2..5
+            </p>
+        </div>
+    </div>  
+        <!-- Team Section -->
+        <section id="team" class="team section">
+            <!-- Section Title -->
+            <div class="container section-title" data-aos="fade-up">
+            <h2>Team</h2>
+            <p>People who make this web program possible</p>
+            </div><!-- End Section Title -->
+            <div class="container">
+            <div class="row gy-4">
+                <div class="col-lg-6" data-aos="fade-up" data-aos-delay="100">
+                <div class="team-member d-flex align-items-start">
+                    <div class="pic"><img src="team.png" class="img-fluid" alt=""></div>
+                    <div class="member-info">
+                    <h4>Chipana German</h4>
+                    <span>Back-End Developer</span>
+                    <p>Trainer Gym</p>
+                    <div class="social">
+                        <a href=""><i class="bi bi-twitter-x"></i></a>
+                        <a href=""><i class="bi bi-facebook"></i></a>
+                        <a href=""><i class="bi bi-instagram"></i></a>
+                        <a href=""> <i class="bi bi-linkedin"></i> </a>
+                    </div>
+                    </div>
+                </div>
+                </div><!-- End Team Member -->
+                <div class="col-lg-6" data-aos="fade-up" data-aos-delay="200">
+                <div class="team-member d-flex align-items-start">
+                    <div class="pic"><img src="team.png" class="img-fluid" alt=""></div>
+                    <div class="member-info">
+                    <h4>Hilacondo Emanuel</h4>
+                    <span>Back-End Developer</span>
+                    <p>Miembro de la pollito army</p>
+                    <div class="social">
+                        <a href=""><i class="bi bi-twitter-x"></i></a>
+                        <a href=""><i class="bi bi-facebook"></i></a>
+                        <a href=""><i class="bi bi-instagram"></i></a>
+                        <a href=""> <i class="bi bi-linkedin"></i> </a>
+                    </div>
+                    </div>
+                </div>
+                </div>
+    
+                <div class="col-lg-6" data-aos="fade-up" data-aos-delay="300">
+                <div class="team-member d-flex align-items-start">
+                    <div class="pic"><img src="team.png" class="img-fluid" alt=""></div>
+                    <div class="member-info">
+                    <h4>Layme Rodrigo</h4>
+                    <span>Data Engineer</span>
+                    <p>Miembro estrella de la alpaca Army</p>
+                    <div class="social">
+                        <a href=""><i class="bi bi-twitter-x"></i></a>
+                        <a href=""><i class="bi bi-facebook"></i></a>
+                        <a href=""><i class="bi bi-instagram"></i></a>
+                        <a href=""> <i class="bi bi-linkedin"></i> </a>
+                    </div>
+                    </div>
+                </div>
+                </div><!-- End Team Member -->
+    
+                <div class="col-lg-6" data-aos="fade-up" data-aos-delay="400">
+                <div class="team-member d-flex align-items-start">
+                    <div class="pic"><img src="team.png" class="img-fluid" alt=""></div>
+                    <div class="member-info">
+                    <h4>Sullca Mauro</h4>
+                    <span>Front-End Developer</span>
+                    <p>Dibujo que sabe el secreto del gozu</p>
+                    <div class="social">
+                        <a href=""><i class="bi bi-twitter-x"></i></a>
+                        <a href=""><i class="bi bi-facebook"></i></a>
+                        <a href=""><i class="bi bi-instagram"></i></a>
+                        <a href=""> <i class="bi bi-linkedin"></i> </a>
+                    </div>
+                    </div>
+                </div>
+                </div><!-- End Team Member -->
+    
+            </div>
+    
+            </div>
+        </section>
+
+        <style>
+            /* Estilo para el contenedor del equipo */
+            .team {
+                background: linear-gradient(135deg, #b3d4fc, #6c9ef2); /* Fondo degradado profesional */
+                padding: 60px 0;
+            }
+        
+            .team .team-member {
+                border: 1px solid #ddd; /* Borde alrededor de cada tarjeta */
+                border-radius: 15px; /* Bordes redondeados */
+                padding: 30px; /* Más espacio interno */
+                background-color: #ffffff; /* Fondo blanco */
+                box-shadow: 0 8px 15px rgba(0, 0, 0, 0.15); /* Sombra más marcada */
+                transition: transform 0.4s ease, box-shadow 0.4s ease; /* Animaciones suaves */
+                display: flex; /* Diseño en fila */
+                align-items: center; /* Centra la imagen y el texto */
+                margin-bottom: 30px; /* Espaciado entre tarjetas */
+            }
+        
+            .team .team-member:hover {
+                transform: translateY(-8px); /* Efecto de levitación más pronunciado */
+                box-shadow: 0 10px 20px rgba(0, 0, 0, 0.25); /* Sombra más fuerte al pasar el mouse */
+            }
+        
+            .team .team-member img {
+                width: 140px; /* Imagen más grande */
+                height: 140px;
+                margin-right: 25px; /* Espaciado entre la imagen y el texto */
+            }
+        
+            .team .member-info {
+                flex: 1; /* Texto ocupa el espacio restante */
+            }
+        
+            .team .member-info h4 {
+                margin: 0;
+                font-size: 22px; /* Texto más destacado */
+                font-weight: bold;
+                color: #343a40; /* Texto oscuro */
+            }
+        
+            .team .member-info span {
+                display: block;
+                font-size: 16px; /* Tamaño de texto ajustado */
+                color: #6c757d; /* Color de texto secundario */
+                margin-bottom: 10px;
+            }
+        
+            .team .member-info p {
+                font-size: 15px; /* Texto más grande */
+                color: #495057; /* Color más oscuro para el cuerpo del texto */
+                margin: 0 0 15px;
+            }
+        
+            .team .social a {
+                margin-right: 15px;
+                color: #007bff; /* Color azul para los iconos */
+                font-size: 20px; /* Iconos más grandes */
+                transition: color 0.3s ease; /* Animación de color */
+            }
+        
+            .team .social a:hover {
+                color: #0056b3; /* Color más oscuro al pasar el mouse */
+            }
+        
+            /* Estilo para el diseño de dos columnas */
+            @media (min-width: 768px) {
+                .team .team-member {
+                    flex-wrap: nowrap; /* Mantiene los elementos en una fila */
+                }
+            }
+        
+            /* Asegurarse de que haya dos usuarios por línea */
+            @media (min-width: 992px) {
+                .team .row > .col-lg-6 {
+                    flex: 0 0 50%; /* Cada tarjeta ocupa el 50% del ancho */
+                    max-width: 50%;
+                }
+            }
+        </style>     
+    </main>
+
+    <footer id="footer" class="footer dark-background">
+        <div class="container">
+          <h3 class="sitename">Java UML Generator</h3>
+          <p>Proyecto realizado por estudiantes de ingeniería de sistemas ¡UNSA!</p>
+          <div class="social-links d-flex justify-content-center">
+            <a href=""><i class="bi bi-twitter-x"></i></a>
+            <a href=""><i class="bi bi-facebook"></i></a>
+            <a href=""><i class="bi bi-instagram"></i></a>
+            <a href=""><i class="bi bi-skype"></i></a>
+            <a href=""><i class="bi bi-linkedin"></i></a>
+          </div>
+          <div class="container">
+            <div class="copyright">
+              <span>Copyright</span> <strong class="px-1 sitename">Java UML Generator</strong> <span>All Rights Reserved</span>
+            </div>
+            <div class="credits">
+              Designed by <a href="https://bootstrapmade.com/">BootstrapMade</a>
+            </div>
+          </div>
+        </div>
+    </footer>
+
+    <!-- Ícono flotante -->
+    <div id="chat-icon">
+        <img src="https://cdn-icons-png.freepik.com/256/5000/5000672.png?semt=ais_hybrid" alt="apuntes">
+    </div>
+
+    <!-- Ventana de apuntes -->
+    <div id="chat-window">
+        <div id="chat-header">Apuntes</div>
+        <div id="mensajes"></div>
+        <form id="formulario">
+            <input type="text" id="entrada" placeholder="Escribe tu mensaje..." required>
+            <button type="submit">Enviar</button>
+        </form>
+
+    <a href="#" id="scroll-top" class="scroll-top d-flex align-items-center justify-content-center"><i class="bi bi-arrow-up-short"></i></a>
+    <div id="preloader"></div>
+    <script src="assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+    <script src="assets/vendor/aos/aos.js"></script>
+    <script src="assets/vendor/glightbox/js/glightbox.min.js"></script>
+    <script src="assets/js/main.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        const loadReposButton = document.getElementById('load-repos');
+        const loadFileButton = document.getElementById('load-file');
+        const usernameInput = document.getElementById('github-username');
+        const repoSelect = document.getElementById('repo-select');
+        const fileSelect = document.getElementById('file-select');
+        const apiUrl = 'https://api.github.com';
+    
+        // Campos de texto de los diferentes secciones
+        const inputMain = document.getElementById('javaCodeMain');
+        const inputInterfaces = document.getElementById('javaCodeInheritance');
+        const inputHerencia = document.getElementById('javaCodeInterface');
+        const inputClases = document.getElementById('javaCodeClass');
+        const inputCompAggre = document.getElementById('javaCompAggre')
+    
+        // Variable para rastrear el campo seleccionado
+        let selectedInput = null;
+    
+        // Asignar evento para detectar cuando un campo de texto es seleccionado
+        [inputMain, inputInterfaces, inputHerencia, inputClases, inputCompAggre].forEach(input => {
+            input.addEventListener('focus', () => {
+                selectedInput = input;
+                console.log('Campo seleccionado:', selectedInput);  // Verificación en consola
+            });
+        });
+    
+        // Cargar repositorios de GitHub
+        loadReposButton.addEventListener('click', () => {
+            const username = usernameInput.value;
+            if (!username) {
+                alert('Por favor ingresa tu nombre de usuario de GitHub');
+                return;
+            }
+    
+            fetch(`${apiUrl}/users/${username}/repos?type=all`)
+                .then(response => response.json())
+                .then(data => {
+                    repoSelect.innerHTML = '<option value="">Selecciona un repositorio</option>';
+                    if (data.length > 0) {
+                        data.forEach(repo => {
+                            const option = document.createElement('option');
+                            option.value = repo.name;
+                            option.textContent = repo.name;
+                            repoSelect.appendChild(option);
+                        });
+                        repoSelect.disabled = false;
+                    } else {
+                        alert('No se encontraron repositorios para este usuario.');
+                    }
+                })
+                .catch(error => alert('Error al cargar repositorios: ' + error));
+        });
+    
+        // Cargar archivos de un repositorio
+        repoSelect.addEventListener('change', () => {
+            const username = usernameInput.value;
+            const repo = repoSelect.value;
+            if (!repo) return;
+    
+            function getJavaFiles(path = '') {
+                fetch(`${apiUrl}/repos/${username}/${repo}/contents/${path}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        data.forEach(item => {
+                            if (item.type === 'file' && item.name.endsWith('.java')) {
+                                const option = document.createElement('option');
+                                option.value = item.download_url;
+                                option.textContent = path ? `${path}/${item.name}` : item.name;
+                                fileSelect.appendChild(option);
+                            } else if (item.type === 'dir') {
+                                getJavaFiles(item.path);
+                            }
+                        });
+    
+                        fileSelect.disabled = false;
+                        loadFileButton.disabled = false;
+                    })
+                    .catch(error => alert('Error al cargar archivos del repositorio: ' + error));
+            }
+    
+            fileSelect.innerHTML = '<option value="">Selecciona un archivo</option>';
+            getJavaFiles();
+        });
+    
+        // Cargar contenido del archivo en el campo seleccionado
+        loadFileButton.addEventListener('click', () => {
+            const fileUrl = fileSelect.value;
+            if (!fileUrl) {
+                alert('Por favor selecciona un archivo para cargar.');
+                return;
+            }
+
+            if (!selectedInput) {
+                alert('Por favor selecciona un campo de texto donde cargar el archivo.');
+                return;
+            }
+
+            fetch(fileUrl)
+                .then(response => response.text())
+                .then(content => {
+                    // Concatenar el contenido nuevo al contenido ya existente
+                    selectedInput.value += '\n' + content;
+                })
+                .catch(error => alert('Error al cargar el contenido del archivo: ' + error));
+        });
+
+        const chatIcon = document.getElementById('chat-icon');
+        const chatWindow = document.getElementById('chat-window');
+        const mensajesDiv = document.getElementById('mensajes');
+        const formulario = document.getElementById('formulario');
+        const entrada = document.getElementById('entrada');
+        const mensajeAnotado = document.getElementById('mensaje-anotado');
+
+        // Mostrar u ocultar el chat
+        chatIcon.addEventListener('click', () => {
+            chatWindow.style.display = chatWindow.style.display === 'flex' ? 'none' : 'flex';
+        });
+
+        // Manejo del formulario de envío
+        formulario.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const mensajeUsuario = entrada.value.trim();
+            if (mensajeUsuario) {
+                agregarMensaje('usuario', mensajeUsuario);
+                entrada.value = '';
+                mostrarNotificacion();
+            }
+        });
+
+        // Función para agregar mensajes al chat
+        function agregarMensaje(clase, texto) {
+            const mensaje = document.createElement('div');
+            mensaje.className = `mensaje ${clase}`;
+            mensaje.innerHTML = `<p>${texto}</p>`;
+            mensajesDiv.appendChild(mensaje);
+            mensajesDiv.scrollTop = mensajesDiv.scrollHeight; // Scroll automático
+        }
+        
+
+        /* enviar formulario y recibir imagen 
+        document.addEventListener('DOMContentLoaded', () => {
+            const form = document.querySelector('.php-code-form');
+            const umlImage = document.getElementById('imagen-uml');
+
+            form.addEventListener('submit', async (event) => {
+                // Prevenir la redirección del formulario
+                event.preventDefault();
+
+                // Recoger los datos del formulario
+                const formData = new FormData(form);
+
+                try {
+                    // Enviar los datos al script Perl
+                    const response = await fetch('/cgi-bin/generate_uml.pl', {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    if (response.ok) {
+                        // Limpiar los campos de texto
+                        form.reset();
+
+                        // Actualizar la imagen del UML si es necesario
+                        umlImage.src = "../puml_files/archivo.svg";  // Asegúrate de que esta ruta esté correcta
+                    } else {
+                        console.error('Error en la solicitud:', response.statusText);
+                    }
+                } catch (error) {
+                    console.error('Error al enviar los datos:', error);
+                }
+            });
+        });
+        */
+        $(document).ready(function () {
+            $('#save-uml-btn').click(function () {
+                // Desactivar el botón para evitar clics repetidos mientras se procesa
+                const saveButton = $('#save-uml-btn');
+                saveButton.prop('disabled', true);
+        
+                // Pedir al usuario que ingrese un nombre para el archivo
+                const filename = prompt("Ingresa el nombre del archivo para guardar:");
+        
+                // Verificar si el usuario ingresó un nombre
+                if (filename) {
+                    $.ajax({
+                        url: '../cgi-bin/save_puml.pl', // Ruta al script Perl
+                        type: 'POST',
+                        dataType: 'json', // Se espera una respuesta en formato JSON
+                        data: { filename: filename }, // Enviar el nombre del archivo
+                        success: function (response) {
+                            if (response.status === "success") {
+                                $('#message').html('<span class="success">' + response.message + '</span>');
+                            } else {
+                                $('#message').html('<span class="error">' + response.message + '</span>');
+                            }
+                        },
+                        error: function (xhr, status, error) {
+                            $('#message').html('<span class="error">Hubo un error al guardar el archivo: ' + error + '</span>');
+                        },
+                        complete: function () {
+                            // Reactivar el botón después de completar la petición
+                            saveButton.prop('disabled', false);
+                        }
+                    });
+                } else {
+                    // Si no se ingresó un nombre de archivo
+                    saveButton.prop('disabled', false);
+                    alert("El nombre del archivo es obligatorio.");
+                }
+            });
+        });
+        
+    document.addEventListener('DOMContentLoaded', () => {
+    const form = document.querySelector('.php-code-form');
+    const umlImageContainer = document.getElementById('umlImageContainer');
+
+    form.addEventListener('submit', async (event) => {
+        // Prevenir la redirección del formulario
+        event.preventDefault();
+
+        // Recoger los datos del formulario
+        const formData = new FormData(form);
+
+        try {
+            // Enviar los datos al script Perl
+            const response = await fetch('/cgi-bin/generate_uml.pl', {
+                method: 'POST',
+                body: formData
+            });
+
+            if (response.ok) {
+                // Limpiar los campos de texto
+                form.reset();
+
+                // Obtener el archivo SVG generado y reemplazar la imagen
+                const svgResponse = await fetch("../puml_files/archivo.svg"); // Ruta del archivo SVG
+
+                if (svgResponse.ok) {
+                    // Leer el archivo SVG como texto
+                    const svgText = await svgResponse.text();
+
+                    // Eliminar el contenido de umlImageContainer
+                    umlImageContainer.innerHTML = '';
+
+                    // Insertar el contenido SVG directamente en el contenedor
+                    umlImageContainer.innerHTML = svgText;
+                } else {
+                    console.error('Error al obtener el archivo SVG:', svgResponse.statusText);
+                }
+            } else {
+                console.error('Error en la solicitud:', response.statusText);
+            }
+        } catch (error) {
+            console.error('Error al enviar los datos:', error);
+        }
+    });
+});
+
+        /* modal */
+        let modalShown = false;
+
+        // Campo de texto para Agregación y Composición
+
+        const modal = document.getElementById('myModal');
+
+        // Asignar evento para detectar cuando se hace clic o se enfoca en el campo de Agregación y Composición
+        inputCompAggre.addEventListener('focus', () => {
+            if (!modalShown) {
+                modal.style.display = 'flex';  // Muestra el modal
+                modalShown = true;  // Marca que ya se ha mostrado el modal
+            }
+        });
+
+        // Cerrar el modal cuando se haga clic fuera de él o de alguna manera lo quieras cerrar
+        window.onclick = function(event) {
+            if (event.target === modal) {
+                modal.style.display = 'none';  // Cierra el modal cuando se hace clic fuera de él
+            }
+        };
+
+    </script>
+</body>
+</html>
