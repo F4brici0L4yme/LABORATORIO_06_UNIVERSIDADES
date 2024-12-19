@@ -256,7 +256,7 @@ sub generate_uml_dependencies {
     return join("\n",@uml_lines);  # Retornar el array con las dependencias
 }
 
-# Generar UML dinámico
+# Generar UML dinámico para hacer el diagrama
 my $uml_content = '@startuml'."\n";
 $uml_content .= generate_uml_class($java_code_inheritance) ."\n";
 $uml_content .= generate_uml_interface($java_code_interface) ."\n";
