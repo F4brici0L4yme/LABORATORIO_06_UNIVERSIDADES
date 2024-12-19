@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/perl -w
 
 use strict;
 use warnings;
@@ -8,10 +8,8 @@ use HTML::Entities;
 use File::Temp qw(tempfile);
 use File::Path qw(make_path);
 
-# Crear objeto CGI
 my $cgi = CGI->new;
 
-# Leer parámetros enviados por POST
 my $java_code_main        = $cgi->param('java_code_main');
 my $java_code_inheritance = $cgi->param('java_code_inheritance');
 my $java_code_interface   = $cgi->param('java_code_interface');
@@ -28,18 +26,18 @@ sub generate_uml_class {
     my $class = '';
 
     foreach my $line (@lines) {
-        # Ignorar líneas que son comentarios o espacios antes de comentarios
+        
         next if $line =~ /^\s*(\/\*|\*|\/\/)/;
         
         if ($line =~ /^\s*(?:public|private)\s+(abstract\s)?class\s+(.+?)\s*\{/) {
-             # Si hay una clase abierta previamente, cerrarla
+            
             if ($current_class) {
                 push @uml_contents, "}\n";
             }
 
-            my $abstract = $1 // ''; # Captura "abstract" si está presente
+            my $abstract = $1 // '';
             my $content = $2;
-            $current_class =  "$abstract"."class $content {";     
+            $current_class =  "$abstract"."class $content {";
             push @uml_contents, $current_class;
             
             $class = $content;
@@ -50,12 +48,11 @@ sub generate_uml_class {
         elsif ($line =~ /^\s*(public|private|protected)\s+(.*?);/) {
             my $visibility = $1;  # Captura public, private o protected
             my $content = $2;     # Captura el contenido después de la visibilidad
-            # Determinar el prefijo según la visibilidad
+            
             my $prefix = $visibility eq 'public'    ? '+' :
-                         $visibility eq 'private'   ? '-' :
-                         $visibility eq 'protected' ? '#' : '';
+                        $visibility eq 'private'   ? '-' :
+                        $visibility eq 'protected' ? '#' : '';
 
-            # Verificar si tiene la palabra static
             my $is_static = '';
             if ($content =~ /\bstatic\s+/) {
                 $is_static = '{static} ';
@@ -71,11 +68,11 @@ sub generate_uml_class {
                 my $name = $2;         # Captura el nombre del atributo
                 my $value = $3 // '';  # Captura el valor si existe (o vacío)
 
-                # Si hay un valor, eliminar comillas si existen
+                
                 $value =~ s/^["']//g;
                 $value =~ s/["']$//g;
 
-                # Construir la representación UML del atributo
+                
                 my $uml_line = "\t$prefix$is_static$name: $type";
                 $uml_line .= " = $value" if $value;  # Agregar el valor si existe
 
@@ -96,29 +93,29 @@ sub generate_uml_class {
             my $visibility = $1;  # Captura public, private o protected
             my $content = $2;     # Captura el contenido después de la visibilidad
 
-            # Determinar el prefijo según la visibilidad
+           
             my $prefix = $visibility eq 'public'    ? '+' :
                         $visibility eq 'private'   ? '-' :
                         $visibility eq 'protected' ? '#' : '';
 
-            # Verificar si tiene la palabra static
+            
             my $is_static = '';
             if ($content =~ /\bstatic\s+/) {
                 $is_static = '{static} ';
-                $content =~ s/\bstatic\s+//g;  # Elimina la palabra static del contenido
+                $content =~ s/\bstatic\s+//g;  
             }
 
-            # Verificar si tiene la palabra abstract
+            
             my $is_abstract = 0;
             if ($content =~ /\babstract\s+/) {
                 $is_abstract = 1;
-                $content =~ s/\babstract\s+//g;  # Elimina la palabra abstract del contenido
+                $content =~ s/\babstract\s+//g;  
             }
 
-            # Validar que no sea static y abstract al mismo tiempo
+            
             if ($is_static && $is_abstract) {
                 warn "Error: un método no puede ser 'static' y 'abstract' al mismo tiempo.\n";
-                return; # Ignorar este método y continuar
+                return; 
             }
 
             # Capturar tipo de retorno, nombre del método, y parámetros
@@ -146,12 +143,12 @@ sub generate_uml_class {
 sub generate_uml_interface {
     my ($java_code) = @_;
 
-    my @lines = split /\n/, $java_code;  # Dividir el código Java en líneas
-    my @uml_contents;                    # Almacena las partes extraídas para el UML
-    my $inside_interface = 0;            # Bandera para saber si estamos dentro de una interfaz
+    my @lines = split /\n/, $java_code;  
+    my @uml_contents;                    
+    my $inside_interface = 0;            
 
     foreach my $line (@lines) {
-        # Ignorar líneas vacías y comentarios
+        
         next if $line =~ /^\s*$/ || $line =~ /^\s*(\/\*|\*|\/\/)/;
 
         # Capturar la declaración de la interfaz
@@ -191,15 +188,15 @@ sub generate_uml_interface {
         }
     }
 
-    # Combinar y devolver el UML
+    
     return join("\n", @uml_contents);
 }
 
 sub generate_uml_aggre_comp {
-    my ($input) = @_;  # Recibe el texto de entrada
-    my @uml_lines;     # Array para almacenar las líneas generadas
+    my ($input) = @_;  
+    my @uml_lines;     
 
-    # Dividir el texto de entrada por líneas para analizar cada una
+    
     my @lines = split /\n/, $input;
 
     foreach my $line (@lines) {
@@ -232,14 +229,14 @@ sub generate_uml_aggre_comp {
         }
     }
 
-    return join("\n",@uml_lines);  # Devolver las líneas generadas
+    return join("\n",@uml_lines);  
 }
 
 sub generate_uml_dependencies {
-    my ($input) = @_;  # Recibe el texto de entrada
-    my @uml_lines;     # Array para almacenar las dependencias generadas
+    my ($input) = @_;  
+    my @uml_lines;     
 
-    # Dividir el texto de entrada por líneas para analizar cada una
+   
     my @lines = split /\n/, $input;
 
     foreach my $line (@lines) {
@@ -253,11 +250,14 @@ sub generate_uml_dependencies {
         }
     }
 
-    return join("\n",@uml_lines);  # Retornar el array con las dependencias
+    return join("\n",@uml_lines);  
 }
 
 # Generar UML dinámico para hacer el diagrama
 my $uml_content = '@startuml'."\n";
+$uml_content .= 'hide class circle'."\n";
+$uml_content .= 'hide interface circle'."\n";
+$uml_content .= 'skinparam classAttributeIconSize 0'."\n";
 $uml_content .= generate_uml_class($java_code_inheritance) ."\n";
 $uml_content .= generate_uml_interface($java_code_interface) ."\n";
 $uml_content .= generate_uml_class($java_code_class) ."\n\n";
@@ -271,7 +271,7 @@ my $output_dir = "/usr/lib/puml_files/";
 my $filename   = "archivo.puml";
 my $filepath   = "$output_dir/$filename";
 
-# Asegurar que el directorio exista
+
 make_path($output_dir) unless -d $output_dir;
 
 # Guardar el archivo UML
