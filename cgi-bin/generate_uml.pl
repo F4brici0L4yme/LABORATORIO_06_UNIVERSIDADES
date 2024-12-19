@@ -188,15 +188,15 @@ sub generate_uml_interface {
         }
     }
 
-    
+    # Combinar y devolver el UML
     return join("\n", @uml_contents);
 }
 
 sub generate_uml_aggre_comp {
-    my ($input) = @_;  
-    my @uml_lines;     
+    my ($input) = @_;  # Recibe el texto de entrada
+    my @uml_lines;     # Array para almacenar las líneas generadas
 
-    
+    # Dividir el texto de entrada por líneas para analizar cada una
     my @lines = split /\n/, $input;
 
     foreach my $line (@lines) {
@@ -204,7 +204,7 @@ sub generate_uml_aggre_comp {
         next if $line =~ /^\s*$/;
 
         # Detectar si la línea contiene @Agregacion o @Composicion (sin importar mayúsculas, minúsculas o tildes)
-        if ($line =~ /\@(?:Agregaci[oó]n|Composici[oó]n):\s*(.*?)\s+a\s+(.*)/i) {
+        if ($line =~ /\@(?:Agregaci[oó]n|Composici[oó]n):\s*(.*?)\s+tiene\s+(.*)/i) {
             my $relation_type = $1;    # Tipo de relación (lo que sigue a @Agregacion o @Composicion)
             my $start_part    = $2;    # Lo que sigue después de 'a'
 
@@ -229,14 +229,14 @@ sub generate_uml_aggre_comp {
         }
     }
 
-    return join("\n",@uml_lines);  
+    return join("\n",@uml_lines);  # Devolver las líneas generadas
 }
 
 sub generate_uml_dependencies {
-    my ($input) = @_;  
-    my @uml_lines;     
+    my ($input) = @_;  # Recibe el texto de entrada
+    my @uml_lines;     # Array para almacenar las dependencias generadas
 
-   
+    # Dividir el texto de entrada por líneas para analizar cada una
     my @lines = split /\n/, $input;
 
     foreach my $line (@lines) {
@@ -250,7 +250,7 @@ sub generate_uml_dependencies {
         }
     }
 
-    return join("\n",@uml_lines);  
+    return join("\n",@uml_lines);  # Retornar el array con las dependencias
 }
 
 # Generar UML dinámico para hacer el diagrama
@@ -271,7 +271,7 @@ my $output_dir = "/usr/lib/puml_files/";
 my $filename   = "archivo.puml";
 my $filepath   = "$output_dir/$filename";
 
-
+# Asegurar que el directorio exista
 make_path($output_dir) unless -d $output_dir;
 
 # Guardar el archivo UML
@@ -297,3 +297,4 @@ if ($exit_status == 0) {
     print "Content-type: text/plain\n\n";
     print "Hubo un error al ejecutar el script.\n";
 }
+
